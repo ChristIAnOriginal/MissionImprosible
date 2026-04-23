@@ -3,6 +3,16 @@ import { pathToFileURL } from 'url'
 import * as path from 'path'
 import * as fs from 'fs'
 
+// Dev-only: auto-reload main process when bundle changes.
+if (process.env.CONTROL_DEV_URL) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require('electron-reload')(path.join(__dirname, '..'), {
+      electron: path.join(__dirname, '..', '..', 'node_modules', '.bin', 'electron'),
+    })
+  } catch { /* ignore in prod */ }
+}
+
 // Must be called before app is ready
 protocol.registerSchemesAsPrivileged([
   { scheme: 'localfile', privileges: { secure: true, supportFetchAPI: true, stream: true, bypassCSP: true } },
@@ -58,8 +68,13 @@ function createControlWindow() {
     title: 'Panel de Control',
     backgroundColor: '#1a1a2e',
   })
-  const indexPath = path.join(__dirname, '../renderer/control/index.html')
-  controlWindow.loadFile(indexPath)
+  const devUrl = process.env.CONTROL_DEV_URL
+  if (devUrl) {
+    controlWindow.loadURL(devUrl)
+  } else {
+    const indexPath = path.join(__dirname, '../renderer/control/index.html')
+    controlWindow.loadFile(indexPath)
+  }
   controlWindow.on('closed', () => { controlWindow = null; app.quit() })
 }
 
@@ -92,8 +107,13 @@ function createProjectionWindow(displayId?: number) {
     title: 'Proyección',
     backgroundColor: '#111111',
   })
-  const indexPath = path.join(__dirname, '../renderer/projection/index.html')
-  projectionWindow.loadFile(indexPath)
+  const devUrl = process.env.PROJECTION_DEV_URL
+  if (devUrl) {
+    projectionWindow.loadURL(devUrl)
+  } else {
+    const indexPath = path.join(__dirname, '../renderer/projection/index.html')
+    projectionWindow.loadFile(indexPath)
+  }
   projectionWindow.once('ready-to-show', () => { broadcastState() })
   projectionWindow.on('closed', () => { projectionWindow = null })
 }

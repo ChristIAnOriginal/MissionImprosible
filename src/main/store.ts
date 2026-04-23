@@ -2,6 +2,7 @@ import * as path from 'path'
 import * as fs from 'fs'
 import { app } from 'electron'
 import { MissionData, ObjectiveData, ChallengeData, CinematicData, CinematicAudioData, MissionPreload } from '../shared/types'
+import { resolveAudioPathIn } from './paths'
 
 export function getDataDir(): string {
   return app.isPackaged
@@ -10,9 +11,7 @@ export function getDataDir(): string {
 }
 
 export function resolveAudioPath(audioPath: string | null): string | null {
-  if (!audioPath) return null
-  if (path.isAbsolute(audioPath)) return audioPath
-  return path.join(getDataDir(), audioPath)
+  return resolveAudioPathIn(getDataDir(), audioPath)
 }
 
 export function deleteDataFile(storedPath: string | null): boolean {

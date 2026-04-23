@@ -1,6 +1,6 @@
 {
   "name": "screenprojection",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "",
   "main": "dist/main/main.js",
   "scripts": {
@@ -9,6 +9,11 @@
     "build:projection": "vite build --config vite.projection.config.ts",
     "build": "npm run build:main && npm run build:control && npm run build:projection",
     "start": "npm run build && electron .",
+    "dev": "node scripts/dev.mjs",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "package": "npm run build && electron-builder --win",
     "generate-icon": "node scripts/generate-icon.mjs",
     "package:portable": "npm run build && electron-builder --win portable"
@@ -20,17 +25,27 @@
     "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.59.0",
+    "@typescript-eslint/parser": "^8.59.0",
     "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-v8": "^2.1.9",
     "concurrently": "^9.2.1",
     "electron": "^41.2.0",
     "electron-builder": "^26.8.1",
+    "electron-reload": "^2.0.0-alpha.1",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "jimp": "^1.6.1",
     "lucide-react": "^1.8.0",
     "png-to-ico": "^3.0.1",
+    "prettier": "^3.8.3",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "typescript": "^6.0.2",
-    "vite": "^8.0.8"
+    "vite": "^8.0.8",
+    "vitest": "^2.1.9",
+    "wait-on": "^9.0.5"
   },
   "build": {
     "appId": "com.misionimprosible.app",
@@ -40,10 +55,16 @@
       "dist/renderer/**/*"
     ],
     "extraResources": [
-      { "from": "src/data", "to": "data" }
+      {
+        "from": "src/data",
+        "to": "data"
+      }
     ],
     "win": {
-      "target": ["nsis", "portable"],
+      "target": [
+        "nsis",
+        "portable"
+      ],
       "icon": "build/icon.ico",
       "executableName": "MisionImprosible"
     },
@@ -57,6 +78,5 @@
       "unpackDirName": "MisionImprosible",
       "requestExecutionLevel": "user"
     }
-  },
-  "dependencies": {}
+  }
 }
