@@ -17,9 +17,27 @@ if (process.env.CONTROL_DEV_URL) {
 protocol.registerSchemesAsPrivileged([
   { scheme: 'localfile', privileges: { secure: true, supportFetchAPI: true, stream: true, bypassCSP: true } },
 ])
-import { AppState, Participant } from '../shared/types'
-import { getMissions, saveMissions, getObjectives, saveObjectives, getChallenges, saveChallenges, getCinematics, saveCinematics, getCinematicAudios, saveCinematicAudios, getSounds, resolveAudioPath, getSettings, saveSettings, getSvgLogoPath, getSvgLogoOrangePath, deleteDataFile } from './store'
-import { MissionData, ObjectiveData, ChallengeData, CinematicData, CinematicAudioData } from '../shared/types'
+import { AppState } from '../shared/types'
+import {
+  getMissions,
+  saveMissions,
+  getObjectives,
+  saveObjectives,
+  getChallenges,
+  saveChallenges,
+  getCinematics,
+  saveCinematics,
+  getCinematicAudios,
+  saveCinematicAudios,
+  getSounds,
+  resolveAudioPath,
+  getSettings,
+  saveSettings,
+  getSvgLogoPath,
+  getSvgLogoOrangePath,
+  deleteDataFile,
+} from './store'
+import { handleSend, handleSendWithSender, handleInvoke, broadcastIpc, sendToRenderer } from '../shared/ipc'
 
 let controlWindow: BrowserWindow | null = null
 let projectionWindow: BrowserWindow | null = null
@@ -118,9 +136,12 @@ function createProjectionWindow(displayId?: number) {
   projectionWindow.on('closed', () => { projectionWindow = null })
 }
 
+function allWindows() {
+  return [controlWindow, projectionWindow]
+}
+
 function broadcastState() {
-  if (controlWindow) controlWindow.webContents.send('state:update', appState)
-  if (projectionWindow) projectionWindow.webContents.send('state:update', appState)
+  broadcastIpc(allWindows(), 'state:update', appState)
 }
 
 app.whenReady().then(() => {
@@ -134,10 +155,19 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })
 
-ipcMain.on('state:get', (event) => { event.sender.send('state:update', appState) })
-const PERSISTED_KEYS: (keyof AppState)[] = ['volume', 'overlayOpacity', 'rouletteTickBase', 'rouletteTickRange', 'curtainFlipEnabled', 'curtainFlipDuration', 'curtainPulseEnabled', 'curtainPulseDuration', 'curtainPulseColor', 'curtainLogoColor', 'curtainWobbleEnabled', 'curtainWobbleDuration', 'missionPreloads']
+// state:get replies directly to the requester, not a broadcast.
+handleSendWithSender(ipcMain, 'state:get', (sender) => {
+  sendToRenderer(sender, 'state:update', appState)
+})
 
-ipcMain.on('appstate:update', (_event, update: Partial<AppState>) => {
+const PERSISTED_KEYS: (keyof AppState)[] = [
+  'volume', 'overlayOpacity', 'rouletteTickBase', 'rouletteTickRange',
+  'curtainFlipEnabled', 'curtainFlipDuration', 'curtainPulseEnabled',
+  'curtainPulseDuration', 'curtainPulseColor', 'curtainLogoColor',
+  'curtainWobbleEnabled', 'curtainWobbleDuration', 'missionPreloads',
+]
+
+handleSend(ipcMain, 'appstate:update', (update) => {
   appState = { ...appState, ...update }
   broadcastState()
   if (PERSISTED_KEYS.some(k => k in update)) {
@@ -159,20 +189,22 @@ ipcMain.on('appstate:update', (_event, update: Partial<AppState>) => {
   }
 })
 
-ipcMain.on('participant:score', (_event, { id, delta }: { id: string; delta: number }) => {
+handleSend(ipcMain, 'participant:score', ({ id, delta }) => {
   const p = appState.participants.find(p => p.id === id)
   if (p) { p.score = p.score + delta; broadcastState() }
 })
-ipcMain.on('participant:score-set', (_event, { id, value }: { id: string; value: number }) => {
+
+handleSend(ipcMain, 'participant:score-set', ({ id, value }) => {
   const p = appState.participants.find(p => p.id === id)
   if (p) { p.score = value; broadcastState() }
 })
-ipcMain.on('participant:update', (_event, participant: Participant) => {
+
+handleSend(ipcMain, 'participant:update', (participant) => {
   const idx = appState.participants.findIndex(p => p.id === participant.id)
   if (idx !== -1) { appState.participants[idx] = participant; broadcastState() }
 })
 
-ipcMain.handle('file:select-photo', async (_event, participantId: string) => {
+handleInvoke(ipcMain, 'file:select-photo', async (participantId) => {
   if (!controlWindow) return null
   const result = await dialog.showOpenDialog(controlWindow, {
     properties: ['openFile'],
@@ -185,7 +217,7 @@ ipcMain.handle('file:select-photo', async (_event, participantId: string) => {
   return filePath
 })
 
-ipcMain.handle('display:list', () => {
+handleInvoke(ipcMain, 'display:list', () => {
   return screen.getAllDisplays().map(d => ({
     id: d.id,
     label: `${d.bounds.width}x${d.bounds.height} (${d.bounds.x},${d.bounds.y})`,
@@ -193,94 +225,77 @@ ipcMain.handle('display:list', () => {
     isPrimary: d.id === screen.getPrimaryDisplay().id,
   }))
 })
-ipcMain.on('display:set', (_event, displayId: number) => { createProjectionWindow(displayId) })
-ipcMain.on('window:close-projection', () => { if (projectionWindow) { projectionWindow.close(); projectionWindow = null } })
 
-function broadcastToRenderers(channel: string, payload?: unknown) {
-  if (projectionWindow) projectionWindow.webContents.send(channel, payload)
-  if (controlWindow) controlWindow.webContents.send(channel, payload)
-}
-
-ipcMain.on('objective:announce', (_event, payload: { name: string }) => {
-  broadcastToRenderers('objective:announce', payload)
+handleSend(ipcMain, 'display:set', (displayId) => { createProjectionWindow(displayId) })
+handleSend(ipcMain, 'window:close-projection', () => {
+  if (projectionWindow) { projectionWindow.close(); projectionWindow = null }
 })
 
-ipcMain.on('mission:announce', (_event, payload: { name: string }) => {
-  broadcastToRenderers('mission:announce', payload)
+handleSend(ipcMain, 'objective:announce', (payload) => {
+  broadcastIpc(allWindows(), 'objective:announce', payload)
 })
 
-ipcMain.on('rating:show', (_event, ratings: Record<string, string>) => {
-  broadcastToRenderers('rating:show', ratings)
-})
-ipcMain.on('rating:clear', () => {
-  broadcastToRenderers('rating:clear')
+handleSend(ipcMain, 'mission:announce', (payload) => {
+  broadcastIpc(allWindows(), 'mission:announce', payload)
 })
 
-ipcMain.on('roulette:start', (_event, payload: { winnerIndex: number; challenges: string[]; skipAnimation?: boolean }) => {
-  broadcastToRenderers('roulette:start', payload)
+handleSend(ipcMain, 'rating:show', (ratings) => {
+  broadcastIpc(allWindows(), 'rating:show', ratings)
 })
 
-ipcMain.on('improsible:start', (_event, payload: { finalistIds: [string, string] }) => {
+handleSend(ipcMain, 'rating:clear', () => {
+  broadcastIpc(allWindows(), 'rating:clear')
+})
+
+handleSend(ipcMain, 'roulette:start', (payload) => {
+  broadcastIpc(allWindows(), 'roulette:start', payload)
+})
+
+handleSend(ipcMain, 'improsible:start', (payload) => {
   appState = { ...appState, improsibleFinalists: payload.finalistIds }
   const audioPath = resolveAudioPath('audio/misiones/M_Final.wav')
-  broadcastToRenderers('improsible:start', { ...payload, audioPath })
+  broadcastIpc(allWindows(), 'improsible:start', { finalistIds: payload.finalistIds, audioPath })
 })
 
-ipcMain.on('improsible:final-start', (_event, payload: { winnerId: string }) => {
+handleSend(ipcMain, 'improsible:final-start', (payload) => {
   appState = { ...appState, improsibleWinner: payload.winnerId }
-  broadcastToRenderers('improsible:final-start', payload)
+  broadcastIpc(allWindows(), 'improsible:final-start', payload)
 })
 
-ipcMain.on('improsible:clear', () => {
+handleSend(ipcMain, 'improsible:clear', () => {
   appState = { ...appState, improsibleFinalists: null, improsibleWinner: null }
-  broadcastToRenderers('improsible:clear')
+  broadcastIpc(allWindows(), 'improsible:clear')
 })
 
-ipcMain.handle('data:get-missions', () => {
-  const missions = getMissions()
-  return missions.map(m => ({ ...m, audioPath: resolveAudioPath(m.audioPath) }))
+handleInvoke(ipcMain, 'data:get-missions', () => {
+  return getMissions().map(m => ({ ...m, audioPath: resolveAudioPath(m.audioPath) }))
 })
 
-ipcMain.handle('data:get-objectives', () => {
-  return getObjectives()
+handleInvoke(ipcMain, 'data:get-objectives', () => getObjectives())
+
+handleInvoke(ipcMain, 'data:get-challenges', () => {
+  return getChallenges().map(c => ({ ...c, audioPath: resolveAudioPath(c.audioPath) }))
 })
 
-ipcMain.handle('data:get-challenges', () => {
-  const challenges = getChallenges()
-  return challenges.map(c => ({ ...c, audioPath: resolveAudioPath(c.audioPath) }))
+handleInvoke(ipcMain, 'data:get-sounds', () => getSounds())
+
+handleInvoke(ipcMain, 'data:save-missions', (missions) => { saveMissions(missions) })
+handleInvoke(ipcMain, 'data:save-objectives', (objectives) => { saveObjectives(objectives) })
+handleInvoke(ipcMain, 'data:save-challenges', (challenges) => { saveChallenges(challenges) })
+
+handleInvoke(ipcMain, 'data:get-cinematics', () => {
+  return getCinematics().map(c => ({ ...c, videoPath: resolveAudioPath(c.videoPath) }))
 })
+handleInvoke(ipcMain, 'data:save-cinematics', (cinematics) => { saveCinematics(cinematics) })
 
-ipcMain.handle('data:get-sounds', () => {
-  return getSounds()
+handleInvoke(ipcMain, 'data:get-cinematic-audios', () => {
+  return getCinematicAudios().map(a => ({ ...a, audioPath: resolveAudioPath(a.audioPath) }))
 })
+handleInvoke(ipcMain, 'data:save-cinematic-audios', (audios) => { saveCinematicAudios(audios) })
 
-ipcMain.handle('data:save-missions', (_event, missions: MissionData[]) => {
-  saveMissions(missions)
-})
+handleInvoke(ipcMain, 'file:delete', (storedPath) => deleteDataFile(storedPath))
 
-ipcMain.handle('data:save-objectives', (_event, objectives: ObjectiveData[]) => {
-  saveObjectives(objectives)
-})
-
-ipcMain.handle('data:save-challenges', (_event, challenges: ChallengeData[]) => {
-  saveChallenges(challenges)
-})
-
-ipcMain.handle('data:get-cinematics', () => {
-  const cinematics = getCinematics()
-  return cinematics.map(c => ({ ...c, videoPath: resolveAudioPath(c.videoPath) }))
-})
-ipcMain.handle('data:save-cinematics', (_event, cinematics: CinematicData[]) => { saveCinematics(cinematics) })
-
-ipcMain.handle('data:get-cinematic-audios', () => {
-  const audios = getCinematicAudios()
-  return audios.map(a => ({ ...a, audioPath: resolveAudioPath(a.audioPath) }))
-})
-ipcMain.handle('data:save-cinematic-audios', (_event, audios: CinematicAudioData[]) => { saveCinematicAudios(audios) })
-
-ipcMain.handle('file:delete', (_event, storedPath: string | null) => deleteDataFile(storedPath))
-
-ipcMain.handle('file:select-video', async () => {
+handleInvoke(ipcMain, 'file:select-video', async () => {
   if (!controlWindow) return null
   const result = await dialog.showOpenDialog(controlWindow, {
     properties: ['openFile'],
@@ -290,15 +305,13 @@ ipcMain.handle('file:select-video', async () => {
   return result.filePaths[0]
 })
 
-ipcMain.handle('data:get-logo-path', () => {
-  return resolveAudioPath('img/logo.png')
-})
-ipcMain.handle('data:get-svg-logo-path', () => getSvgLogoPath())
-ipcMain.handle('data:get-svg-logo-orange-path', () => getSvgLogoOrangePath())
-ipcMain.handle('data:get-svg-logo-content', () => fs.readFileSync(getSvgLogoPath(), 'utf-8'))
-ipcMain.handle('data:get-svg-logo-orange-content', () => fs.readFileSync(getSvgLogoOrangePath(), 'utf-8'))
+handleInvoke(ipcMain, 'data:get-logo-path', () => resolveAudioPath('img/logo.png'))
+handleInvoke(ipcMain, 'data:get-svg-logo-path', () => getSvgLogoPath())
+handleInvoke(ipcMain, 'data:get-svg-logo-orange-path', () => getSvgLogoOrangePath())
+handleInvoke(ipcMain, 'data:get-svg-logo-content', () => fs.readFileSync(getSvgLogoPath(), 'utf-8'))
+handleInvoke(ipcMain, 'data:get-svg-logo-orange-content', () => fs.readFileSync(getSvgLogoOrangePath(), 'utf-8'))
 
-ipcMain.handle('file:select-logo', async () => {
+handleInvoke(ipcMain, 'file:select-logo', async () => {
   if (!controlWindow) return null
   const result = await dialog.showOpenDialog(controlWindow, {
     properties: ['openFile'],
@@ -314,7 +327,7 @@ ipcMain.handle('file:select-logo', async () => {
   return dest
 })
 
-ipcMain.handle('file:select-audio', async () => {
+handleInvoke(ipcMain, 'file:select-audio', async () => {
   if (!controlWindow) return null
   const result = await dialog.showOpenDialog(controlWindow, {
     properties: ['openFile'],

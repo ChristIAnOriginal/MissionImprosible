@@ -81,12 +81,3 @@ export interface CinematicAudioData {
   audioPath: string | null
 }
 
-export type IpcChannel =
-  | 'state:update'
-  | 'state:get'
-  | 'state:response'
-  | 'file:select-photo'
-  | 'file:photo-selected'
-  | 'display:list'
-  | 'display:list-response'
-  | 'display:set'
