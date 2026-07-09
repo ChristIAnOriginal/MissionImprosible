@@ -4,7 +4,7 @@ import { AppState, Participant, MissionData, ObjectiveData, CinematicData, Cinem
 import { ProjectionPreview } from './ProjectionPreview'
 import { playAudio, getAudioDuration } from '../utils/audio'
 import { RatingKey, RATING_OPTIONS } from '../constants/ratings'
-import { TabId, TABS } from '../constants/tabs'
+import { TabId, TABS, TAB_GROUPS } from '../constants/tabs'
 
 function toLocalFile(absPath: string | null): string | null {
   if (!absPath) return null
@@ -449,49 +449,75 @@ export function ControlApp() {
     <div className={`control-root${elderlyMode ? ' control-root--elderly' : ''}`}>
       {/* Top bar */}
       <div className="topbar">
-        <h1>MISIÓN IMPROSIBLE — CONTROL</h1>
+        <h1>MISIÓN IMPROSIBLE<span className="topbar-sub">Control</span></h1>
+
         <div className="topbar-spacer" />
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+
+        {/* Qué se muestra en la proyección */}
+        <div className="seg" role="group" aria-label="Modo de proyección">
           <button
-            className={`btn btn-sm ${state.curtain ? 'btn-primary' : 'btn-ghost'}`}
+            className={`seg-btn${state.curtain ? ' seg-btn--active' : ''}`}
             onClick={() => window.electronAPI.updateAppState({ curtain: true, activeCinematic: null, activeCinematicName: null })}
-          ><EyeOff size={14} /><span>Cortina</span></button>
+          ><EyeOff size={15} /><span>Cortina</span></button>
           <button
-            className={`btn btn-sm ${!state.curtain ? 'btn-primary' : 'btn-ghost'}`}
+            className={`seg-btn${!state.curtain ? ' seg-btn--active' : ''}`}
             onClick={() => window.electronAPI.updateAppState({ curtain: false, activeCinematic: null, activeCinematicName: null })}
-          ><Trophy size={14} /><span>Puntuaciones</span></button>
-          <button
-            className="btn btn-danger btn-sm"
-            onClick={() => setFinalizarConfirm(true)}
-          ><Power size={14} /><span>Finalizar</span></button>
-          <button
-            className={`btn btn-sm ${elderlyMode ? 'btn-primary' : 'btn-ghost'}`}
-            onClick={() => setElderlyMode(v => !v)}
-            title="Aumenta el tamaño del texto del panel de control"
-          ><ZoomIn size={14} /><span>Modo Anciano</span></button>
+          ><Trophy size={15} /><span>Puntuaciones</span></button>
         </div>
-        <div className="display-select" style={{ marginLeft: 12 }}>
-          <Monitor size={14} style={{ color: '#888' }} />
+
+        <div className="topbar-divider" />
+
+        {/* Destino de proyección */}
+        <div className="display-select">
+          <Monitor size={15} style={{ color: '#888' }} />
           <select value={selectedDisplay ?? ''} onChange={e => setSelectedDisplay(Number(e.target.value))}>
             {displays.map(d => (
               <option key={d.id} value={d.id}>{d.isPrimary ? '(Principal) ' : ''}{d.label}</option>
             ))}
           </select>
-          <button className="btn btn-primary" onClick={handleProjectDisplay}>Proyectar</button>
+          <button className="btn btn-primary btn-sm" onClick={handleProjectDisplay}>Proyectar</button>
         </div>
+
+        <div className="topbar-divider" />
+
+        <button
+          className={`btn btn-sm ${elderlyMode ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setElderlyMode(v => !v)}
+          title="Aumenta el tamaño del texto del panel de control"
+        ><ZoomIn size={14} /><span>Modo Anciano</span></button>
+        <button
+          className="btn btn-danger btn-sm"
+          onClick={() => setFinalizarConfirm(true)}
+        ><Power size={14} /><span>Finalizar</span></button>
       </div>
 
       {/* Main */}
       <div className="main-layout">
-        <div className="participants-panel">
-          <div className="tab-bar">
-            {TABS.map(({ id, label, Icon }) => (
-              <button key={id} className={`tab-btn${activeTab === id ? ' tab-btn--active' : ''}`} onClick={() => setActiveTab(id)}>
-                <Icon size={14} /><span>{label}</span>
-              </button>
-            ))}
-          </div>
+        <nav className="sidebar">
+          {TAB_GROUPS.map(g => (
+            <div key={g.id} className="sidebar-group">
+              <div className="sidebar-group-label">{g.label}</div>
+              {TABS.filter(t => t.group === g.id).map(({ id, label, Icon }) => (
+                <button
+                  key={id}
+                  className={`sidebar-btn${activeTab === id ? ' sidebar-btn--active' : ''}`}
+                  onClick={() => setActiveTab(id)}
+                >
+                  <Icon size={17} /><span>{label}</span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
 
+        <div className="content-panel">
+          <div className="content-header">
+            {(() => {
+              const tab = TABS.find(t => t.id === activeTab)!
+              const Icon = tab.Icon
+              return (<><Icon size={18} /><span>{tab.label}</span></>)
+            })()}
+          </div>
           <div className="tab-content">
             {activeTab === 'participantes' && (
               <div className="participants-list">
@@ -505,26 +531,97 @@ export function ControlApp() {
                       onClick={() => window.electronAPI.updateAppState({ visibleParticipants: Math.min(4, state.visibleParticipants + 1) })}>+</button>
                   </div>
                 </div>
-                {state.participants.map((p, idx) => (
-                  <div key={p.id} className={`participant-row${shakingIds.has(p.id) ? ' participant-row--shaking' : ''}`} style={{ opacity: idx < state.visibleParticipants ? 1 : 0.35 }}>
-                    <div className="participant-thumb" onClick={() => handleSelectPhoto(p.id)} title="Click para cargar foto"
-                      style={{ filter: p.eliminated ? 'grayscale(100%)' : 'none', transition: 'filter 0.3s' }}>
-                      {p.photoPath
-                        ? <img src={toLocalFile(p.photoPath) ?? ''} alt={p.name} />
-                        : <div className="thumb-placeholder">📷<br />Foto</div>}
-                    </div>
-                    <div className="participant-info">
-                      <input className="participant-name-input" value={p.name} onChange={e => handleNameChange(p, e.target.value)} onFocus={e => e.target.select()} />
-                      <div className="score-controls">
+                <div className="participants-grid">
+                {state.participants.map((p, idx) => {
+                  const startedAt = eliminatedAt[p.id]
+                  const counting = startedAt !== undefined
+                  const elapsed = counting ? eliminatedNow - startedAt : 0
+                  const progress = counting ? Math.min(1, elapsed / ELIM_RESTORE_MS) : 0
+                  const radius = 10
+                  const circumference = 2 * Math.PI * radius
+                  const dashOffset = circumference * (1 - progress)
+                  const pending = pendingScores[p.id] ?? 0
+                  return (
+                    <div
+                      key={p.id}
+                      className={`participant-row${shakingIds.has(p.id) ? ' participant-row--shaking' : ''}${p.eliminated ? ' participant-row--eliminated' : ''}`}
+                      style={{ opacity: idx < state.visibleParticipants ? 1 : 0.4 }}
+                    >
+                      {/* Cabecera: foto + nombre + acciones */}
+                      <div className="pcard-header">
+                        <div className="participant-thumb" onClick={() => handleSelectPhoto(p.id)} title="Click para cargar foto"
+                          style={{ filter: p.eliminated ? 'grayscale(100%)' : 'none', transition: 'filter 0.3s' }}>
+                          {p.photoPath
+                            ? <img src={toLocalFile(p.photoPath) ?? ''} alt={p.name} />
+                            : <div className="thumb-placeholder">📷<br />Foto</div>}
+                        </div>
+                        <div className="pcard-idbox">
+                          <span className="pcard-idx">Jugador {idx + 1}{p.eliminated ? ' · Eliminado' : ''}</span>
+                          <input className="participant-name-input" value={p.name} onChange={e => handleNameChange(p, e.target.value)} onFocus={e => e.target.select()} />
+                        </div>
+                        <div className="elim-actions">
+                          <button
+                            className={`elim-btn elim-btn--shoot${p.eliminated ? ' elim-btn--active' : ''}`}
+                            onClick={() => handleEliminate(p.id)}
+                            title="Eliminar participante"
+                          >
+                            <Target size={13} />
+                          </button>
+                          <button
+                            className={`elim-btn elim-btn--restore${counting ? ' elim-btn--counting' : ''}`}
+                            onClick={() => handleRestore(p.id)}
+                            disabled={!p.eliminated}
+                            title="Restaurar participante"
+                          >
+                            {counting && (
+                              <svg className="elim-progress-ring" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="12" r={radius} className="elim-progress-track" />
+                                <circle cx="12" cy="12" r={radius} className="elim-progress-bar"
+                                  style={{ strokeDasharray: circumference, strokeDashoffset: dashOffset }} />
+                              </svg>
+                            )}
+                            <RotateCcw size={13} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Puntos: marcador + edición directa */}
+                      <div className="pcard-row">
+                        <span className="pcard-label">Puntos</span>
                         <span key={scoreFlash[p.id] ?? 0} className="score-value score-value--flash">{p.score}</span>
-                        <div className="pending-controls">
+                        <div className="score-manual">
+                          <span className="score-manual-label">
+                            Fijar
+                            <span className="score-manual-hint" title="Escribe directamente el valor exacto de la puntuación">?</span>
+                          </span>
+                          <input
+                            className="score-input"
+                            type="text"
+                            inputMode="numeric"
+                            value={scoreInputValues[p.id] ?? String(p.score)}
+                            onChange={e => handleScoreInput(p.id, e.target.value)}
+                            onBlur={() => handleScoreBlur(p.id, p.score)}
+                            onFocus={e => e.target.select()}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Ajustar: sumar/restar en lote */}
+                      <div className="pcard-row">
+                        <span className="pcard-label">Puntuar</span>
+                        <div className="pcard-adjust">
                           <button className="score-btn score-btn-minus" onClick={() => handlePendingDelta(p.id, -1)}>−</button>
-                          <span className={`pending-value${(pendingScores[p.id] ?? 0) !== 0 ? ' pending-value--active' : ''}`}>
-                            {(pendingScores[p.id] ?? 0) > 0 ? '+' : ''}{pendingScores[p.id] ?? 0}
+                          <span className={`pending-value${pending !== 0 ? ' pending-value--active' : ''}`}>
+                            {pending > 0 ? '+' : ''}{pending}
                           </span>
                           <button className="score-btn score-btn-plus" onClick={() => handlePendingDelta(p.id, 1)}>+</button>
-                          <button className="btn btn-primary score-commit-btn" onClick={() => handleCommitScore(p.id)}>✓</button>
+                          <button className="btn btn-primary score-commit-btn" disabled={pending === 0} onClick={() => handleCommitScore(p.id)}>✓ Aplicar</button>
                         </div>
+                      </div>
+
+                      {/* Calificar: badges en pantalla */}
+                      <div className="pcard-row">
+                        <span className="pcard-label">Calificar</span>
                         <div className="rating-buttons">
                           {RATING_OPTIONS.filter(o => o.key !== 'noaplica').map(o => (
                             <button
@@ -538,65 +635,11 @@ export function ControlApp() {
                             </button>
                           ))}
                         </div>
-                        <div className="score-manual">
-                          <span className="score-manual-label">
-                            Puntuación actual
-                            <span className="score-manual-hint" title="Puedes modificar el valor manualmente escribiendo directamente en este campo">?</span>
-                          </span>
-                          <input
-                            className="score-input"
-                            type="text"
-                            inputMode="numeric"
-                            value={scoreInputValues[p.id] ?? String(p.score)}
-                            onChange={e => handleScoreInput(p.id, e.target.value)}
-                            onBlur={() => handleScoreBlur(p.id, p.score)}
-                            onFocus={e => e.target.select()}
-                          />
-                        </div>
-                      </div>
-                      <div className="elim-actions">
-                        <button
-                          className={`elim-btn elim-btn--shoot${p.eliminated ? ' elim-btn--active' : ''}`}
-                          onClick={() => handleEliminate(p.id)}
-                          title="Eliminar participante"
-                        >
-                          <Target size={13} />
-                        </button>
-                        {(() => {
-                          const startedAt = eliminatedAt[p.id]
-                          const counting = startedAt !== undefined
-                          const elapsed = counting ? eliminatedNow - startedAt : 0
-                          const progress = counting
-                            ? Math.min(1, elapsed / ELIM_RESTORE_MS)
-                            : 0
-                          const radius = 10
-                          const circumference = 2 * Math.PI * radius
-                          const dashOffset = circumference * (1 - progress)
-                          return (
-                            <button
-                              className={`elim-btn elim-btn--restore${counting ? ' elim-btn--counting' : ''}`}
-                              onClick={() => handleRestore(p.id)}
-                              disabled={!p.eliminated}
-                              title="Restaurar participante"
-                            >
-                              {counting && (
-                                <svg className="elim-progress-ring" viewBox="0 0 24 24" aria-hidden="true">
-                                  <circle cx="12" cy="12" r={radius} className="elim-progress-track" />
-                                  <circle
-                                    cx="12" cy="12" r={radius}
-                                    className="elim-progress-bar"
-                                    style={{ strokeDasharray: circumference, strokeDashoffset: dashOffset }}
-                                  />
-                                </svg>
-                              )}
-                              <RotateCcw size={13} />
-                            </button>
-                          )
-                        })()}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
+                </div>
                 <div className="rating-actions">
                   {(() => {
                     const elapsed = autoClearStart !== null ? autoClearNow - autoClearStart : 0
@@ -1441,14 +1484,26 @@ export function ControlApp() {
           </div>
         </div>
 
-        <div className="right-panel">
-          <div className="preview-section">
-            <div className="panel-title" style={{ padding: '10px 0 6px' }}>Vista previa</div>
-            <div className="preview-frame">
-              <ProjectionPreview state={state} />
-            </div>
+        <aside className="right-panel">
+          {(() => {
+            const live = state.activeCinematic
+              ? { kind: 'cinematic', label: 'Cinemática' }
+              : state.curtain
+                ? { kind: 'curtain', label: 'Cortina' }
+                : { kind: 'scores', label: 'Puntuaciones' }
+            return (
+              <div className="preview-header">
+                <span className="preview-title">Vista previa</span>
+                <span className={`live-pill live-pill--${live.kind}`}>
+                  <span className="live-dot" />{live.label}
+                </span>
+              </div>
+            )
+          })()}
+          <div className="preview-frame">
+            <ProjectionPreview state={state} />
           </div>
-        </div>
+        </aside>
       </div>
 
       {/* ── Ruleta confirm ── */}
