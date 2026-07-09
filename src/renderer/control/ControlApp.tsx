@@ -531,26 +531,96 @@ export function ControlApp() {
                       onClick={() => window.electronAPI.updateAppState({ visibleParticipants: Math.min(4, state.visibleParticipants + 1) })}>+</button>
                   </div>
                 </div>
-                {state.participants.map((p, idx) => (
-                  <div key={p.id} className={`participant-row${shakingIds.has(p.id) ? ' participant-row--shaking' : ''}`} style={{ opacity: idx < state.visibleParticipants ? 1 : 0.35 }}>
-                    <div className="participant-thumb" onClick={() => handleSelectPhoto(p.id)} title="Click para cargar foto"
-                      style={{ filter: p.eliminated ? 'grayscale(100%)' : 'none', transition: 'filter 0.3s' }}>
-                      {p.photoPath
-                        ? <img src={toLocalFile(p.photoPath) ?? ''} alt={p.name} />
-                        : <div className="thumb-placeholder">📷<br />Foto</div>}
-                    </div>
-                    <div className="participant-info">
-                      <input className="participant-name-input" value={p.name} onChange={e => handleNameChange(p, e.target.value)} onFocus={e => e.target.select()} />
-                      <div className="score-controls">
+                {state.participants.map((p, idx) => {
+                  const startedAt = eliminatedAt[p.id]
+                  const counting = startedAt !== undefined
+                  const elapsed = counting ? eliminatedNow - startedAt : 0
+                  const progress = counting ? Math.min(1, elapsed / ELIM_RESTORE_MS) : 0
+                  const radius = 10
+                  const circumference = 2 * Math.PI * radius
+                  const dashOffset = circumference * (1 - progress)
+                  const pending = pendingScores[p.id] ?? 0
+                  return (
+                    <div
+                      key={p.id}
+                      className={`participant-row${shakingIds.has(p.id) ? ' participant-row--shaking' : ''}${p.eliminated ? ' participant-row--eliminated' : ''}`}
+                      style={{ opacity: idx < state.visibleParticipants ? 1 : 0.4 }}
+                    >
+                      {/* Cabecera: foto + nombre + acciones */}
+                      <div className="pcard-header">
+                        <div className="participant-thumb" onClick={() => handleSelectPhoto(p.id)} title="Click para cargar foto"
+                          style={{ filter: p.eliminated ? 'grayscale(100%)' : 'none', transition: 'filter 0.3s' }}>
+                          {p.photoPath
+                            ? <img src={toLocalFile(p.photoPath) ?? ''} alt={p.name} />
+                            : <div className="thumb-placeholder">📷<br />Foto</div>}
+                        </div>
+                        <div className="pcard-idbox">
+                          <span className="pcard-idx">Jugador {idx + 1}{p.eliminated ? ' · Eliminado' : ''}</span>
+                          <input className="participant-name-input" value={p.name} onChange={e => handleNameChange(p, e.target.value)} onFocus={e => e.target.select()} />
+                        </div>
+                        <div className="elim-actions">
+                          <button
+                            className={`elim-btn elim-btn--shoot${p.eliminated ? ' elim-btn--active' : ''}`}
+                            onClick={() => handleEliminate(p.id)}
+                            title="Eliminar participante"
+                          >
+                            <Target size={13} />
+                          </button>
+                          <button
+                            className={`elim-btn elim-btn--restore${counting ? ' elim-btn--counting' : ''}`}
+                            onClick={() => handleRestore(p.id)}
+                            disabled={!p.eliminated}
+                            title="Restaurar participante"
+                          >
+                            {counting && (
+                              <svg className="elim-progress-ring" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="12" r={radius} className="elim-progress-track" />
+                                <circle cx="12" cy="12" r={radius} className="elim-progress-bar"
+                                  style={{ strokeDasharray: circumference, strokeDashoffset: dashOffset }} />
+                              </svg>
+                            )}
+                            <RotateCcw size={13} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Puntos: marcador + edición directa */}
+                      <div className="pcard-row">
+                        <span className="pcard-label">Puntos</span>
                         <span key={scoreFlash[p.id] ?? 0} className="score-value score-value--flash">{p.score}</span>
-                        <div className="pending-controls">
+                        <div className="score-manual">
+                          <span className="score-manual-label">
+                            Fijar
+                            <span className="score-manual-hint" title="Escribe directamente el valor exacto de la puntuación">?</span>
+                          </span>
+                          <input
+                            className="score-input"
+                            type="text"
+                            inputMode="numeric"
+                            value={scoreInputValues[p.id] ?? String(p.score)}
+                            onChange={e => handleScoreInput(p.id, e.target.value)}
+                            onBlur={() => handleScoreBlur(p.id, p.score)}
+                            onFocus={e => e.target.select()}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Ajustar: sumar/restar en lote */}
+                      <div className="pcard-row">
+                        <span className="pcard-label">Ajustar</span>
+                        <div className="pcard-adjust">
                           <button className="score-btn score-btn-minus" onClick={() => handlePendingDelta(p.id, -1)}>−</button>
-                          <span className={`pending-value${(pendingScores[p.id] ?? 0) !== 0 ? ' pending-value--active' : ''}`}>
-                            {(pendingScores[p.id] ?? 0) > 0 ? '+' : ''}{pendingScores[p.id] ?? 0}
+                          <span className={`pending-value${pending !== 0 ? ' pending-value--active' : ''}`}>
+                            {pending > 0 ? '+' : ''}{pending}
                           </span>
                           <button className="score-btn score-btn-plus" onClick={() => handlePendingDelta(p.id, 1)}>+</button>
-                          <button className="btn btn-primary score-commit-btn" onClick={() => handleCommitScore(p.id)}>✓</button>
+                          <button className="btn btn-primary score-commit-btn" disabled={pending === 0} onClick={() => handleCommitScore(p.id)}>✓ Aplicar</button>
                         </div>
+                      </div>
+
+                      {/* Calificar: badges en pantalla */}
+                      <div className="pcard-row">
+                        <span className="pcard-label">Calificar</span>
                         <div className="rating-buttons">
                           {RATING_OPTIONS.filter(o => o.key !== 'noaplica').map(o => (
                             <button
@@ -564,65 +634,10 @@ export function ControlApp() {
                             </button>
                           ))}
                         </div>
-                        <div className="score-manual">
-                          <span className="score-manual-label">
-                            Puntuación actual
-                            <span className="score-manual-hint" title="Puedes modificar el valor manualmente escribiendo directamente en este campo">?</span>
-                          </span>
-                          <input
-                            className="score-input"
-                            type="text"
-                            inputMode="numeric"
-                            value={scoreInputValues[p.id] ?? String(p.score)}
-                            onChange={e => handleScoreInput(p.id, e.target.value)}
-                            onBlur={() => handleScoreBlur(p.id, p.score)}
-                            onFocus={e => e.target.select()}
-                          />
-                        </div>
-                      </div>
-                      <div className="elim-actions">
-                        <button
-                          className={`elim-btn elim-btn--shoot${p.eliminated ? ' elim-btn--active' : ''}`}
-                          onClick={() => handleEliminate(p.id)}
-                          title="Eliminar participante"
-                        >
-                          <Target size={13} />
-                        </button>
-                        {(() => {
-                          const startedAt = eliminatedAt[p.id]
-                          const counting = startedAt !== undefined
-                          const elapsed = counting ? eliminatedNow - startedAt : 0
-                          const progress = counting
-                            ? Math.min(1, elapsed / ELIM_RESTORE_MS)
-                            : 0
-                          const radius = 10
-                          const circumference = 2 * Math.PI * radius
-                          const dashOffset = circumference * (1 - progress)
-                          return (
-                            <button
-                              className={`elim-btn elim-btn--restore${counting ? ' elim-btn--counting' : ''}`}
-                              onClick={() => handleRestore(p.id)}
-                              disabled={!p.eliminated}
-                              title="Restaurar participante"
-                            >
-                              {counting && (
-                                <svg className="elim-progress-ring" viewBox="0 0 24 24" aria-hidden="true">
-                                  <circle cx="12" cy="12" r={radius} className="elim-progress-track" />
-                                  <circle
-                                    cx="12" cy="12" r={radius}
-                                    className="elim-progress-bar"
-                                    style={{ strokeDasharray: circumference, strokeDashoffset: dashOffset }}
-                                  />
-                                </svg>
-                              )}
-                              <RotateCcw size={13} />
-                            </button>
-                          )
-                        })()}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
                 <div className="rating-actions">
                   {(() => {
                     const elapsed = autoClearStart !== null ? autoClearNow - autoClearStart : 0
