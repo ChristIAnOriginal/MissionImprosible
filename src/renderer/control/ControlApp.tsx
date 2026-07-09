@@ -531,6 +531,7 @@ export function ControlApp() {
                       onClick={() => window.electronAPI.updateAppState({ visibleParticipants: Math.min(4, state.visibleParticipants + 1) })}>+</button>
                   </div>
                 </div>
+                <div className="participants-grid">
                 {state.participants.map((p, idx) => {
                   const startedAt = eliminatedAt[p.id]
                   const counting = startedAt !== undefined
@@ -607,7 +608,7 @@ export function ControlApp() {
 
                       {/* Ajustar: sumar/restar en lote */}
                       <div className="pcard-row">
-                        <span className="pcard-label">Ajustar</span>
+                        <span className="pcard-label">Puntuar</span>
                         <div className="pcard-adjust">
                           <button className="score-btn score-btn-minus" onClick={() => handlePendingDelta(p.id, -1)}>−</button>
                           <span className={`pending-value${pending !== 0 ? ' pending-value--active' : ''}`}>
@@ -638,6 +639,7 @@ export function ControlApp() {
                     </div>
                   )
                 })}
+                </div>
                 <div className="rating-actions">
                   {(() => {
                     const elapsed = autoClearStart !== null ? autoClearNow - autoClearStart : 0
