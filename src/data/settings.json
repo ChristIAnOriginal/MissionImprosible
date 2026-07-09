@@ -26,5 +26,7 @@
         "2": "sible"
       }
     }
-  }
+  },
+  "ratingDuration": 10,
+  "ratingAutoClear": true
 }

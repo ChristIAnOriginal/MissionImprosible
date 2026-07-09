@@ -69,6 +69,8 @@ let appState: AppState = {
   curtainWobbleEnabled: savedSettings.curtainWobbleEnabled,
   curtainWobbleDuration: savedSettings.curtainWobbleDuration,
   missionPreloads: savedSettings.missionPreloads,
+  ratingDuration: savedSettings.ratingDuration,
+  ratingAutoClear: savedSettings.ratingAutoClear,
   curtain: true,
 }
 
@@ -165,6 +167,7 @@ const PERSISTED_KEYS: (keyof AppState)[] = [
   'curtainFlipEnabled', 'curtainFlipDuration', 'curtainPulseEnabled',
   'curtainPulseDuration', 'curtainPulseColor', 'curtainLogoColor',
   'curtainWobbleEnabled', 'curtainWobbleDuration', 'missionPreloads',
+  'ratingDuration', 'ratingAutoClear',
 ]
 
 handleSend(ipcMain, 'appstate:update', (update) => {
@@ -185,6 +188,8 @@ handleSend(ipcMain, 'appstate:update', (update) => {
       curtainWobbleEnabled: appState.curtainWobbleEnabled ?? false,
       curtainWobbleDuration: appState.curtainWobbleDuration ?? 0.35,
       missionPreloads: appState.missionPreloads ?? {},
+      ratingDuration: appState.ratingDuration ?? 5,
+      ratingAutoClear: appState.ratingAutoClear ?? true,
     })
   }
 })

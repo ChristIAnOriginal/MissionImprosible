@@ -99,20 +99,20 @@
 
 @keyframes mod-fill-pulse {
   0%, 100% { fill: #fff; }
-  50% { fill: var(--pulse-color, #ff5500); }
+  50% { fill: var(--pulse-color, var(--color-accent-bright)); }
 }
 
 @keyframes mod-stroke-pulse {
   0%, 100% { stroke: #fff; }
-  50% { stroke: var(--pulse-color, #ff5500); }
+  50% { stroke: var(--pulse-color, var(--color-accent-bright)); }
 }
 
 .curtain-logo .modificable {
-  fill: var(--pulse-color, #ff5500);
+  fill: var(--pulse-color, var(--color-accent-bright));
 }
 
 .curtain-logo .modificable-stroke {
-  stroke: var(--pulse-color, #ff5500);
+  stroke: var(--pulse-color, var(--color-accent-bright));
 }
 
 .curtain-logo.pulse-enabled .modificable {
@@ -167,7 +167,7 @@
 }
 
 .title-mision { color: #ffffff; }
-.title-impro  { color: #ff5500; }
+.title-impro  { color: var(--color-accent-bright); }
 .title-sible  { color: #ffffff; }
 
 .header-logo {
@@ -290,7 +290,7 @@
 }
 
 .participant-name {
-  background: #f97316;
+  background: var(--color-accent);
   color: #fff;
   text-align: center;
   font-size: 2.8vw;
@@ -313,7 +313,7 @@
 
 @keyframes score-pop-projection {
   0%   { transform: scale(1); background: #b5d99c; }
-  35%  { transform: scale(1.18); background: #f97316; color: #fff; }
+  35%  { transform: scale(1.18); background: var(--color-accent); color: #fff; }
   100% { transform: scale(1); background: #b5d99c; color: #111; }
 }
 
@@ -354,7 +354,7 @@
 .mission-name-label {
   font-size: 2.2vw;
   font-weight: 900;
-  color: #f97316;
+  color: var(--color-accent);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -437,7 +437,7 @@
 }
 
 .mission-card-name {
-  background: #f97316;
+  background: var(--color-accent);
   color: #fff;
   text-align: center;
   font-size: 2.5vw;
@@ -455,7 +455,7 @@
   justify-content: center;
   font-size: 7vw;
   font-weight: 900;
-  color: #f97316;
+  color: var(--color-accent);
   text-shadow: 0 0 20px rgba(249,115,22,0.5), 0 0 40px rgba(249,115,22,0.25);
   letter-spacing: 0.05em;
   flex-shrink: 0;
@@ -528,7 +528,7 @@
 
 .mission-announce-name {
   position: relative;
-  color: #f97316;
+  color: var(--color-accent);
   font-size: 6.5vw;
   font-weight: 900;
   letter-spacing: 0.03em;
@@ -561,8 +561,8 @@
 
 .obj-announce-card {
   position: relative;
-  background: #0f0f1a;
-  border: 3px solid #f97316;
+  background: var(--color-bg-deep);
+  border: 3px solid var(--color-accent);
   border-radius: 4px;
   padding: 5vw 7vw;
   text-align: center;
@@ -589,7 +589,7 @@
   font-size: 2vw;
   font-weight: 900;
   letter-spacing: 0.25em;
-  color: #f97316;
+  color: var(--color-accent);
   text-transform: uppercase;
   margin-bottom: 1.5vw;
 }
@@ -609,7 +609,7 @@
   position: absolute;
   width: 18px;
   height: 18px;
-  border-color: #f97316;
+  border-color: var(--color-accent);
   border-style: solid;
   opacity: 0.7;
 }
@@ -708,7 +708,7 @@
 }
 
 .mission-final-word {
-  color: #dc2626;
+  color: var(--color-danger);
   font-size: 11vw;
   font-weight: 900;
   font-style: italic;
@@ -978,7 +978,7 @@
   height: 28vh;
   border-radius: 50%;
   overflow: hidden;
-  border: 0.5vh solid #dc2626;
+  border: 0.5vh solid var(--color-danger);
   box-shadow: 0 0 4vh rgba(220, 38, 38, 0.5);
 }
 
@@ -1019,7 +1019,7 @@
 }
 
 .improsible-vs-word {
-  color: #dc2626;
+  color: var(--color-danger);
   font-size: 14vw;
   font-weight: 900;
   font-style: italic;
@@ -1047,88 +1047,38 @@
   position: fixed;
   inset: 0;
   z-index: 235;
-  background: radial-gradient(ellipse at center, #1a0a00 0%, #000 70%);
+  background: radial-gradient(ellipse at center, #1a0a00 0%, #000 72%);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 
-/* Confetti */
-.winner-confetti-container {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.confetti-piece {
-  position: absolute;
-  top: -5vh;
-  border-radius: 1px;
-  animation-name: confetti-fall-v0;
-  animation-iteration-count: infinite;
-  animation-timing-function: linear;
-}
-
-.confetti-piece--circle {
-  border-radius: 50%;
-}
-
-.confetti-piece--v1 { animation-name: confetti-fall-v1; }
-.confetti-piece--v2 { animation-name: confetti-fall-v2; }
-
-@keyframes confetti-fall-v0 {
-  0%   { transform: translateY(-10vh) rotate(0deg);   opacity: 1; }
-  100% { transform: translateY(110vh) rotate(720deg); opacity: 0.8; }
-}
-
-@keyframes confetti-fall-v1 {
-  0%   { transform: translateY(-10vh) translateX(0)     rotate(0deg);   opacity: 1; }
-  33%  { transform: translateY(37vh)  translateX(-3vw)  rotate(240deg); }
-  66%  { transform: translateY(74vh)  translateX(2vw)   rotate(480deg); }
-  100% { transform: translateY(110vh) translateX(-1vw)  rotate(720deg); opacity: 0.8; }
-}
-
-@keyframes confetti-fall-v2 {
-  0%   { transform: translateY(-10vh) translateX(0)    rotate(0deg);   opacity: 1; }
-  33%  { transform: translateY(37vh)  translateX(4vw)  rotate(240deg); }
-  66%  { transform: translateY(74vh)  translateX(-2vw) rotate(480deg); }
-  100% { transform: translateY(110vh) translateX(3vw)  rotate(720deg); opacity: 0.8; }
-}
-
-/* Stage wrapper absorbe la animación de entrada */
+/* Stage wrapper absorbe la animación de entrada (fade + subida sobria) */
 .winner-stage-wrapper {
   position: relative;
   z-index: 1;
-  animation: winner-stage-enter 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: winner-stage-enter 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes winner-stage-enter {
-  from { opacity: 0; transform: scale(0); }
-  to   { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: translateY(4vh); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Stage: pulso infinito después de la entrada */
 .winner-stage {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3vh;
-  animation: winner-pulse 1.4s ease-in-out 0.7s infinite;
-}
-
-@keyframes winner-pulse {
-  0%, 100% { transform: scale(1);    filter: drop-shadow(0 0 20px rgba(250,204,21,0.6)); }
-  50%       { transform: scale(1.12); filter: drop-shadow(0 0 60px rgba(250,204,21,1)); }
 }
 
 .winner-photo-ring {
   width: 40vh;
   height: 40vh;
   border-radius: 50%;
-  border: 0.8vh solid #facc15;
-  box-shadow: 0 0 6vh rgba(250,204,21,0.7), inset 0 0 3vh rgba(250,204,21,0.2);
+  border: 0.6vh solid var(--color-accent);
+  box-shadow: 0 0 4vh rgba(249,115,22,0.5), inset 0 0 2vh rgba(249,115,22,0.15);
   overflow: hidden;
   position: relative;
 }
@@ -1149,7 +1099,7 @@
   background: #374151;
   font-size: 12vh;
   font-weight: 900;
-  color: #facc15;
+  color: var(--color-accent);
 }
 
 .winner-name {
@@ -1159,20 +1109,16 @@
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  text-shadow: 0 0 30px rgba(250,204,21,0.6), 0 2px 8px rgba(0,0,0,0.9);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.9);
 }
 
 .winner-label {
   font-size: clamp(32px, 7vw, 100px);
   font-weight: 900;
-  font-style: italic;
-  color: #facc15;
+  color: var(--color-accent);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  text-shadow:
-    0 0 40px rgba(250,204,21,0.9),
-    0 0 80px rgba(250,204,21,0.6),
-    3px 3px 0 rgba(0,0,0,0.8);
+  text-shadow: 0 0 24px rgba(249,115,22,0.45), 2px 2px 0 rgba(0,0,0,0.8);
 }
 
 .winner-sublabel {
@@ -1182,9 +1128,7 @@
   text-transform: uppercase;
   letter-spacing: 0.35em;
   margin-top: 0.4em;
-  text-shadow:
-    0 0 20px rgba(250,204,21,0.6),
-    2px 2px 0 rgba(0,0,0,0.7);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7);
 }
 
 /* ── ROULETTE OVERLAY ── */
@@ -1234,7 +1178,7 @@
   font-size: 3vw;
   font-weight: 900;
   letter-spacing: 0.3em;
-  color: #f97316;
+  color: var(--color-accent);
   text-transform: uppercase;
 }
 
@@ -1260,7 +1204,7 @@
   font-size: 2vw;
   font-weight: 900;
   letter-spacing: 0.3em;
-  color: #f97316;
+  color: var(--color-accent);
   text-transform: uppercase;
 }
 

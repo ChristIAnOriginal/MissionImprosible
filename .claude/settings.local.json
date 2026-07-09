@@ -28,7 +28,12 @@
       "Bash(git checkout *)",
       "Bash(git merge *)",
       "Bash(git branch *)",
-      "Bash(git reset *)"
+      "Bash(git reset *)",
+      "Bash(npm ls *)",
+      "Bash(npm test *)",
+      "Bash(npx vitest *)",
+      "Bash(node -e \"const { resolveAudioPath } = require\\('./dist/main/main.js'\\)\")",
+      "Bash(node -e \"const p = require\\('./src/main/paths.ts'\\)\")"
     ]
   }
 }

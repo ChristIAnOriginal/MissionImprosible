@@ -115,6 +115,8 @@ export interface Settings {
   curtainWobbleEnabled: boolean
   curtainWobbleDuration: number
   missionPreloads: Record<string, MissionPreload>
+  ratingDuration: number
+  ratingAutoClear: boolean
 }
 
 const SETTINGS_DEFAULTS: Settings = {
@@ -131,6 +133,8 @@ const SETTINGS_DEFAULTS: Settings = {
   curtainWobbleEnabled: false,
   curtainWobbleDuration: 0.35,
   missionPreloads: {},
+  ratingDuration: 5,
+  ratingAutoClear: true,
 }
 
 export function getSettings(): Settings {

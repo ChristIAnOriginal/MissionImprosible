@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Monitor, Play, RotateCcw, Target, Plus, Trash2, GripVertical } from 'lucide-react'
+import { Monitor, Play, RotateCcw, Target, Plus, Trash2, GripVertical, EyeOff, Trophy, Power, ZoomIn } from 'lucide-react'
 import { AppState, Participant, MissionData, ObjectiveData, CinematicData, CinematicAudioData } from '../../shared/types'
 import { ProjectionPreview } from './ProjectionPreview'
 import { playAudio, getAudioDuration } from '../utils/audio'
@@ -85,12 +85,13 @@ export function ControlApp() {
   const [isAnimating, setIsAnimating] = useState(false)
   const [animatingKey, setAnimatingKey] = useState<string | null>(null)
   const [shakingIds, setShakingIds] = useState<Set<string>>(new Set())
-  const [ratings, setRatings] = useState<Record<string, RatingKey>>({})
+  const [activeRatings, setActiveRatings] = useState<Record<string, RatingKey>>({})
   const [rouletteConfirm, setRouletteConfirm] = useState(false)
   const [autoClearStart, setAutoClearStart] = useState<number | null>(null)
   const [autoClearNow, setAutoClearNow] = useState(0)
   const [eliminatedAt, setEliminatedAt] = useState<Record<string, number>>({})
   const [eliminatedNow, setEliminatedNow] = useState(0)
+  const [elderlyMode, setElderlyMode] = useState(false)
 
   // Mission drag-and-drop
   const [missionDragIdx, setMissionDragIdx] = useState<number | null>(null)
@@ -154,7 +155,7 @@ export function ControlApp() {
     return unsub
   }, [])
 
-  const AUTO_CLEAR_MS = 5000
+  const ratingDurationMs = (state?.ratingDuration ?? 5) * 1000
   const ELIM_RESTORE_MS = 5000
 
   const stateRef = useRef(state)
@@ -188,13 +189,30 @@ export function ControlApp() {
     const tick = () => setAutoClearNow(Date.now())
     const interval = setInterval(tick, 100)
     const elapsed = Date.now() - autoClearStart
-    const remaining = Math.max(0, AUTO_CLEAR_MS - elapsed)
+    const remaining = Math.max(0, ratingDurationMs - elapsed)
     const timeout = setTimeout(() => {
       window.electronAPI.clearRatings()
+      setActiveRatings({})
       setAutoClearStart(null)
     }, remaining)
     return () => { clearInterval(interval); clearTimeout(timeout) }
-  }, [autoClearStart])
+  }, [autoClearStart, ratingDurationMs])
+
+  // Aplica una calificación a un participante: suma puntos, muestra el badge en
+  // pantalla (fusionado con los ya visibles) y reinicia el contador para que todos
+  // desaparezcan a la vez.
+  const handleRating = (id: string, key: RatingKey) => {
+    const opt = RATING_OPTIONS.find(o => o.key === key)!
+    window.electronAPI.updateScore(id, opt.points)
+    setScoreFlash(prev => ({ ...prev, [id]: (prev[id] ?? 0) + 1 }))
+    const merged = { ...activeRatings, [id]: key }
+    setActiveRatings(merged)
+    window.electronAPI.showRatings(merged)
+    if (state?.ratingAutoClear ?? true) {
+      setAutoClearStart(Date.now())
+      setAutoClearNow(Date.now())
+    }
+  }
 
   const playGunshot = () => {
     if (soundDisparo) playAudio(soundDisparo, state?.volume ?? 100)
@@ -428,24 +446,29 @@ export function ControlApp() {
   if (!state) return <div className="control-root" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>Cargando...</div>
 
   return (
-    <div className="control-root">
+    <div className={`control-root${elderlyMode ? ' control-root--elderly' : ''}`}>
       {/* Top bar */}
       <div className="topbar">
         <h1>MISIÓN IMPROSIBLE — CONTROL</h1>
         <div className="topbar-spacer" />
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <button
-            className="btn btn-primary btn-sm"
+            className={`btn btn-sm ${state.curtain ? 'btn-primary' : 'btn-ghost'}`}
             onClick={() => window.electronAPI.updateAppState({ curtain: true, activeCinematic: null, activeCinematicName: null })}
-          >Cortina</button>
+          ><EyeOff size={14} /><span>Cortina</span></button>
           <button
-            className="btn btn-ghost btn-sm"
+            className={`btn btn-sm ${!state.curtain ? 'btn-primary' : 'btn-ghost'}`}
             onClick={() => window.electronAPI.updateAppState({ curtain: false, activeCinematic: null, activeCinematicName: null })}
-          >Puntuaciones</button>
+          ><Trophy size={14} /><span>Puntuaciones</span></button>
           <button
             className="btn btn-danger btn-sm"
             onClick={() => setFinalizarConfirm(true)}
-          >Finalizar</button>
+          ><Power size={14} /><span>Finalizar</span></button>
+          <button
+            className={`btn btn-sm ${elderlyMode ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setElderlyMode(v => !v)}
+            title="Aumenta el tamaño del texto del panel de control"
+          ><ZoomIn size={14} /><span>Modo Anciano</span></button>
         </div>
         <div className="display-select" style={{ marginLeft: 12 }}>
           <Monitor size={14} style={{ color: '#888' }} />
@@ -501,24 +524,19 @@ export function ControlApp() {
                           </span>
                           <button className="score-btn score-btn-plus" onClick={() => handlePendingDelta(p.id, 1)}>+</button>
                           <button className="btn btn-primary score-commit-btn" onClick={() => handleCommitScore(p.id)}>✓</button>
-                          {(() => {
-                            const rk = ratings[p.id] ?? 'noaplica'
-                            const selectedColor = RATING_OPTIONS.find(o => o.key === rk)!.color
-                            return (
-                              <select
-                                className="rating-select"
-                                value={rk}
-                                style={{ color: selectedColor }}
-                                onChange={e => setRatings(prev => ({ ...prev, [p.id]: e.target.value as RatingKey }))}
-                              >
-                                {RATING_OPTIONS.map(o => (
-                                  <option key={o.key} value={o.key} style={{ color: o.color }}>
-                                    {o.label}
-                                  </option>
-                                ))}
-                              </select>
-                            )
-                          })()}
+                        </div>
+                        <div className="rating-buttons">
+                          {RATING_OPTIONS.filter(o => o.key !== 'noaplica').map(o => (
+                            <button
+                              key={o.key}
+                              className={`rating-btn rating-btn--${o.key}${activeRatings[p.id] === o.key ? ' rating-btn--active' : ''}`}
+                              onClick={() => handleRating(p.id, o.key)}
+                              title={`${o.label} (+${o.points})`}
+                            >
+                              <span className="rating-btn-label">{o.label}</span>
+                              <span className="rating-btn-points">+{o.points}</span>
+                            </button>
+                          ))}
                         </div>
                         <div className="score-manual">
                           <span className="score-manual-label">
@@ -582,10 +600,10 @@ export function ControlApp() {
                 <div className="rating-actions">
                   {(() => {
                     const elapsed = autoClearStart !== null ? autoClearNow - autoClearStart : 0
-                    const remainingMs = autoClearStart !== null ? Math.max(0, AUTO_CLEAR_MS - elapsed) : 0
+                    const remainingMs = autoClearStart !== null ? Math.max(0, ratingDurationMs - elapsed) : 0
                     const remainingSec = Math.ceil(remainingMs / 1000)
                     const progressPct = autoClearStart !== null
-                      ? Math.min(100, (elapsed / AUTO_CLEAR_MS) * 100)
+                      ? Math.min(100, (elapsed / ratingDurationMs) * 100)
                       : 0
                     const active = autoClearStart !== null
                     return (
@@ -593,7 +611,7 @@ export function ControlApp() {
                         className={`btn btn-ghost clear-ratings-btn${active ? ' clear-ratings-btn--counting' : ''}`}
                         onClick={() => {
                           window.electronAPI.clearRatings()
-                          setRatings({})
+                          setActiveRatings({})
                           setAutoClearStart(null)
                           state.participants.filter(p => p.eliminated).forEach(p =>
                             window.electronAPI.updateParticipant({ ...p, eliminated: false })
@@ -682,6 +700,31 @@ export function ControlApp() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#6b7280' }}>
                       <span>0 Hz (tono fijo)</span>
                       <span>1200 Hz (variación máxima)</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="config-group">
+                  <div className="config-group-title">Calificaciones</div>
+                  <div className="field-row">
+                    <span className="field-label">Ocultar automáticamente</span>
+                    <button
+                      className={`btn btn-sm ${(state.ratingAutoClear ?? true) ? 'btn-primary' : 'btn-ghost'}`}
+                      onClick={() => window.electronAPI.updateAppState({ ratingAutoClear: !(state.ratingAutoClear ?? true) })}
+                    >
+                      {(state.ratingAutoClear ?? true) ? 'Activado' : 'Desactivado'}
+                    </button>
+                  </div>
+                  <div className="field-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8, marginTop: 4, opacity: (state.ratingAutoClear ?? true) ? 1 : 0.4 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                      <span className="field-label">Duración en pantalla</span>
+                      <span style={{ fontSize: 13, color: '#f97316', fontWeight: 700 }}>{state.ratingDuration ?? 5}s</span>
+                    </div>
+                    <input type="range" className="volume-slider" min={1} max={30} step={0.5}
+                      disabled={!(state.ratingAutoClear ?? true)}
+                      value={state.ratingDuration ?? 5}
+                      onChange={e => window.electronAPI.updateAppState({ ratingDuration: Number(e.target.value) })} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#6b7280' }}>
+                      <span>1s</span><span>30s</span>
                     </div>
                   </div>
                 </div>
@@ -1404,43 +1447,6 @@ export function ControlApp() {
             <div className="preview-frame">
               <ProjectionPreview state={state} />
             </div>
-            <button
-              className="btn btn-primary preview-apply-btn"
-              onClick={() => {
-                const toApply = state.participants.filter(p => (ratings[p.id] ?? 'noaplica') !== 'noaplica')
-                toApply.forEach(p => {
-                  const pts = RATING_OPTIONS.find(o => o.key === ratings[p.id])!.points
-                  window.electronAPI.updateScore(p.id, pts)
-                })
-                const flashed = new Set<string>()
-                state.participants.forEach(p => {
-                  const pending = pendingScores[p.id] ?? 0
-                  if (pending !== 0) {
-                    window.electronAPI.updateScore(p.id, pending)
-                    flashed.add(p.id)
-                  }
-                })
-                toApply.forEach(p => flashed.add(p.id))
-                if (flashed.size > 0) {
-                  setScoreFlash(prev => {
-                    const next = { ...prev }
-                    flashed.forEach(id => { next[id] = (next[id] ?? 0) + 1 })
-                    return next
-                  })
-                }
-                setPendingScores({})
-                const payload: Record<string, string> = {}
-                toApply.forEach(p => { payload[p.id] = ratings[p.id] })
-                window.electronAPI.showRatings(payload)
-                setRatings({})
-                if (toApply.length > 0) {
-                  setAutoClearStart(Date.now())
-                  setAutoClearNow(Date.now())
-                }
-              }}
-            >
-              Aplicar calificaciones
-            </button>
           </div>
         </div>
       </div>

@@ -868,37 +868,8 @@ export function ProjectionApp() {
       {/* ── Fase E: Ganador ── */}
       {improsiblePhase === 'final' && improsibleWinnerId && (() => {
         const winner = state.participants.find(p => p.id === improsibleWinnerId)
-        const confetti = Array.from({ length: 50 }, (_, i) => ({
-          i,
-          left: Math.random() * 100,
-          color: ['#facc15','#ef4444','#3b82f6','#10b981','#ec4899','#fbbf24'][i % 6],
-          delay: -(Math.random() * 3),
-          duration: 2.5 + Math.random() * 2,
-          rotate: Math.random() * 360,
-          width: 8 + Math.floor(Math.random() * 6),
-          height: 12 + Math.floor(Math.random() * 8),
-          circular: i % 5 === 0,
-          variant: i % 3,
-        }))
         return (
           <div className="improsible-winner-overlay">
-            <div className="winner-confetti-container">
-              {confetti.map(c => (
-                <span
-                  key={c.i}
-                  className={`confetti-piece confetti-piece--v${c.variant}${c.circular ? ' confetti-piece--circle' : ''}`}
-                  style={{
-                    left: `${c.left}vw`,
-                    background: c.color,
-                    animationDelay: `${c.delay}s`,
-                    animationDuration: `${c.duration}s`,
-                    transform: `rotate(${c.rotate}deg)`,
-                    width: `${c.width}px`,
-                    height: `${c.height}px`,
-                  }}
-                />
-              ))}
-            </div>
             <div className="winner-stage-wrapper">
               <div className="winner-stage">
                 <div className="winner-photo-ring">

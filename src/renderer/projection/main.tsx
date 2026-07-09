@@ -1,6 +1,7 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { ProjectionApp } from './ProjectionApp'
+import '../design-tokens.css'
 import './projection.css'
 
 // Apply body styles specific to the projection window (not needed in control renderer)

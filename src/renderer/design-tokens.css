@@ -1,0 +1,55 @@
+/* ────────────────────────────────────────────────────────────
+   Design tokens — fuente única de color/spacing/tipografía.
+   Importado por ambos renderers (control y projection) antes de
+   su CSS de feature. No añadir hex sueltos nuevos: usar var(--…).
+   ──────────────────────────────────────────────────────────── */
+:root {
+  /* ── Marca / acento ── */
+  --color-accent: #f97316;
+  --color-accent-dark: #ea6a05;
+  --color-accent-bright: #ff5500;
+
+  /* ── Semánticos ── */
+  --color-danger: #dc2626;
+  --color-danger-strong: #b91c1c;
+  --color-danger-soft: #ef4444;
+  --color-warning: #facc15;
+  --color-warning-dark: #eab308;
+  --color-success: #22c55e;
+
+  /* ── Superficies (UI oscura del control) ── */
+  --color-bg: #1a1a2e;
+  --color-bg-deep: #0f0f1a;
+  --color-surface: #2a2a3e;
+  --color-surface-alt: #232336;
+  --color-surface-raised: #3a3a4e;
+
+  /* ── Grises neutros ── */
+  --color-gray-700: #374151;
+  --color-gray-600: #4b5563;
+  --color-gray-500: #6b7280;
+  --color-gray-400: #9ca3af;
+
+  /* ── Texto ── */
+  --color-text: #ffffff;
+  --color-text-muted: #cccccc;
+  --color-text-dim: #888888;
+
+  /* ── Escala de espaciado ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-8: 48px;
+
+  /* ── Tipografía ──
+     "Modo anciano": subir --font-size-base escala todo lo definido en rem. */
+  --font-size-base: 16px;
+  --font-size-sm: 0.875rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+
+  font-size: var(--font-size-base);
+}
