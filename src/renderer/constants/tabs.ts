@@ -3,12 +3,20 @@ import { Users, Flag, Settings, Crosshair, Target, Film, Zap } from 'lucide-reac
 
 export type TabId = 'participantes' | 'objetivos' | 'desafios' | 'misiones' | 'cinematicas' | 'improsible' | 'configuracion'
 
-export const TABS: { id: TabId; label: string; Icon: React.ElementType }[] = [
-  { id: 'participantes', label: 'Participantes',     Icon: Users },
-  { id: 'misiones',      label: 'Misiones',          Icon: Crosshair },
-  { id: 'objetivos',     label: 'Objetivos',         Icon: Flag },
-  { id: 'desafios',      label: 'Desafíos',          Icon: Target },
-  { id: 'cinematicas',   label: 'Cinemáticas',       Icon: Film },
-  { id: 'improsible',    label: 'Misión Improsible', Icon: Zap },
-  { id: 'configuracion', label: 'Configuración',     Icon: Settings },
+export type TabGroup = 'juego' | 'especiales' | 'sistema'
+
+export const TAB_GROUPS: { id: TabGroup; label: string }[] = [
+  { id: 'juego',      label: 'Juego' },
+  { id: 'especiales', label: 'Especiales' },
+  { id: 'sistema',    label: 'Sistema' },
+]
+
+export const TABS: { id: TabId; label: string; Icon: React.ElementType; group: TabGroup }[] = [
+  { id: 'participantes', label: 'Participantes',     Icon: Users,     group: 'juego' },
+  { id: 'misiones',      label: 'Misiones',          Icon: Crosshair, group: 'juego' },
+  { id: 'objetivos',     label: 'Objetivos',         Icon: Flag,      group: 'juego' },
+  { id: 'desafios',      label: 'Desafíos',          Icon: Target,    group: 'juego' },
+  { id: 'cinematicas',   label: 'Cinemáticas',       Icon: Film,      group: 'especiales' },
+  { id: 'improsible',    label: 'Misión Improsible', Icon: Zap,       group: 'especiales' },
+  { id: 'configuracion', label: 'Configuración',     Icon: Settings,  group: 'sistema' },
 ]

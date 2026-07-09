@@ -4,7 +4,7 @@ import { AppState, Participant, MissionData, ObjectiveData, CinematicData, Cinem
 import { ProjectionPreview } from './ProjectionPreview'
 import { playAudio, getAudioDuration } from '../utils/audio'
 import { RatingKey, RATING_OPTIONS } from '../constants/ratings'
-import { TabId, TABS } from '../constants/tabs'
+import { TabId, TABS, TAB_GROUPS } from '../constants/tabs'
 
 function toLocalFile(absPath: string | null): string | null {
   if (!absPath) return null
@@ -449,49 +449,75 @@ export function ControlApp() {
     <div className={`control-root${elderlyMode ? ' control-root--elderly' : ''}`}>
       {/* Top bar */}
       <div className="topbar">
-        <h1>MISIÓN IMPROSIBLE — CONTROL</h1>
+        <h1>MISIÓN IMPROSIBLE<span className="topbar-sub">Control</span></h1>
+
         <div className="topbar-spacer" />
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+
+        {/* Qué se muestra en la proyección */}
+        <div className="seg" role="group" aria-label="Modo de proyección">
           <button
-            className={`btn btn-sm ${state.curtain ? 'btn-primary' : 'btn-ghost'}`}
+            className={`seg-btn${state.curtain ? ' seg-btn--active' : ''}`}
             onClick={() => window.electronAPI.updateAppState({ curtain: true, activeCinematic: null, activeCinematicName: null })}
-          ><EyeOff size={14} /><span>Cortina</span></button>
+          ><EyeOff size={15} /><span>Cortina</span></button>
           <button
-            className={`btn btn-sm ${!state.curtain ? 'btn-primary' : 'btn-ghost'}`}
+            className={`seg-btn${!state.curtain ? ' seg-btn--active' : ''}`}
             onClick={() => window.electronAPI.updateAppState({ curtain: false, activeCinematic: null, activeCinematicName: null })}
-          ><Trophy size={14} /><span>Puntuaciones</span></button>
-          <button
-            className="btn btn-danger btn-sm"
-            onClick={() => setFinalizarConfirm(true)}
-          ><Power size={14} /><span>Finalizar</span></button>
-          <button
-            className={`btn btn-sm ${elderlyMode ? 'btn-primary' : 'btn-ghost'}`}
-            onClick={() => setElderlyMode(v => !v)}
-            title="Aumenta el tamaño del texto del panel de control"
-          ><ZoomIn size={14} /><span>Modo Anciano</span></button>
+          ><Trophy size={15} /><span>Puntuaciones</span></button>
         </div>
-        <div className="display-select" style={{ marginLeft: 12 }}>
-          <Monitor size={14} style={{ color: '#888' }} />
+
+        <div className="topbar-divider" />
+
+        {/* Destino de proyección */}
+        <div className="display-select">
+          <Monitor size={15} style={{ color: '#888' }} />
           <select value={selectedDisplay ?? ''} onChange={e => setSelectedDisplay(Number(e.target.value))}>
             {displays.map(d => (
               <option key={d.id} value={d.id}>{d.isPrimary ? '(Principal) ' : ''}{d.label}</option>
             ))}
           </select>
-          <button className="btn btn-primary" onClick={handleProjectDisplay}>Proyectar</button>
+          <button className="btn btn-primary btn-sm" onClick={handleProjectDisplay}>Proyectar</button>
         </div>
+
+        <div className="topbar-divider" />
+
+        <button
+          className={`btn btn-sm ${elderlyMode ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setElderlyMode(v => !v)}
+          title="Aumenta el tamaño del texto del panel de control"
+        ><ZoomIn size={14} /><span>Modo Anciano</span></button>
+        <button
+          className="btn btn-danger btn-sm"
+          onClick={() => setFinalizarConfirm(true)}
+        ><Power size={14} /><span>Finalizar</span></button>
       </div>
 
       {/* Main */}
       <div className="main-layout">
-        <div className="participants-panel">
-          <div className="tab-bar">
-            {TABS.map(({ id, label, Icon }) => (
-              <button key={id} className={`tab-btn${activeTab === id ? ' tab-btn--active' : ''}`} onClick={() => setActiveTab(id)}>
-                <Icon size={14} /><span>{label}</span>
-              </button>
-            ))}
-          </div>
+        <nav className="sidebar">
+          {TAB_GROUPS.map(g => (
+            <div key={g.id} className="sidebar-group">
+              <div className="sidebar-group-label">{g.label}</div>
+              {TABS.filter(t => t.group === g.id).map(({ id, label, Icon }) => (
+                <button
+                  key={id}
+                  className={`sidebar-btn${activeTab === id ? ' sidebar-btn--active' : ''}`}
+                  onClick={() => setActiveTab(id)}
+                >
+                  <Icon size={17} /><span>{label}</span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
 
+        <div className="content-panel">
+          <div className="content-header">
+            {(() => {
+              const tab = TABS.find(t => t.id === activeTab)!
+              const Icon = tab.Icon
+              return (<><Icon size={18} /><span>{tab.label}</span></>)
+            })()}
+          </div>
           <div className="tab-content">
             {activeTab === 'participantes' && (
               <div className="participants-list">
@@ -1441,14 +1467,26 @@ export function ControlApp() {
           </div>
         </div>
 
-        <div className="right-panel">
-          <div className="preview-section">
-            <div className="panel-title" style={{ padding: '10px 0 6px' }}>Vista previa</div>
-            <div className="preview-frame">
-              <ProjectionPreview state={state} />
-            </div>
+        <aside className="right-panel">
+          {(() => {
+            const live = state.activeCinematic
+              ? { kind: 'cinematic', label: 'Cinemática' }
+              : state.curtain
+                ? { kind: 'curtain', label: 'Cortina' }
+                : { kind: 'scores', label: 'Puntuaciones' }
+            return (
+              <div className="preview-header">
+                <span className="preview-title">Vista previa</span>
+                <span className={`live-pill live-pill--${live.kind}`}>
+                  <span className="live-dot" />{live.label}
+                </span>
+              </div>
+            )
+          })()}
+          <div className="preview-frame">
+            <ProjectionPreview state={state} />
           </div>
-        </div>
+        </aside>
       </div>
 
       {/* ── Ruleta confirm ── */}
