@@ -643,10 +643,18 @@ export function ProjectionApp() {
     // Duelo: siempre 1 vs 1, con el VS ocupando la posición central.
     const impro = state.participants.filter(p => mv!.teamImpro.includes(p.id) && activePlayers.has(p.id))
     const sible = state.participants.filter(p => mv!.teamSible.includes(p.id) && activePlayers.has(p.id))
+    // Las dos tarjetas del duelo miden lo mismo que en la fila de "todos juegan":
+    // .participants ocupa 97vw (100 menos el padding del root) y separa las n
+    // tarjetas con gaps de 2vw, así que cada una mide (97vw - gaps) / n.
+    const n = Math.max(1, state.visibleParticipants)
+    const duelCardWidth = `calc((97vw - ${2 * (n - 1)}vw) / ${n})`
     return (
       <div className={`projection-root mission-view${missionExiting ? ' mission-view--exiting' : ''}`}>
         {missionHeader}
-        <div className="participants participants--duel">
+        <div
+          className="participants participants--duel"
+          style={{ '--duel-card-w': duelCardWidth } as React.CSSProperties}
+        >
           {impro.map(missionCard)}
           <div className="mission-vs">VS</div>
           {sible.map(missionCard)}

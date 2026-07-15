@@ -363,14 +363,14 @@
 }
 
 /* Duelo 1v1: las mismas tarjetas que en puntuaciones, agrupadas al centro con
-   el VS en la posición del medio. El tope de ancho las deja del tamaño exacto
-   que tienen en la tabla de puntuaciones (4 tarjetas en 97vw con gaps de 2vw). */
+   el VS en la posición del medio. El ancho lo fija --duel-card-w (calculado en
+   ProjectionApp) para que midan igual que en la fila de "todos juegan". */
 .participants--duel {
   justify-content: center;
 }
 
 .participants--duel .participant-card {
-  max-width: 22.75vw;
+  flex: 0 0 var(--duel-card-w);
 }
 
 .mission-vs {
