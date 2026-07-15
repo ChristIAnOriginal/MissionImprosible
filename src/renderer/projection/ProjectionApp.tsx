@@ -68,6 +68,7 @@ export function ProjectionApp() {
   const rouletteNamesRef = useRef<string[]>([])
   const soundObjetivoRef = useRef<string | null>(null)
   const soundPuntajeRef = useRef<string | null>(null)
+  const soundGanadorRef = useRef<string | null>(null)
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [svgLogoContent, setSvgLogoContent] = useState<string | null>(null)
   const [svgLogoOrangeContent, setSvgLogoOrangeContent] = useState<string | null>(null)
@@ -138,6 +139,7 @@ export function ProjectionApp() {
     ;window.electronAPI.getSounds().then((sounds: Record<string, string | null>) => {
       soundObjetivoRef.current = toLocalFile(sounds.objetivo ?? null)
       soundPuntajeRef.current = toLocalFile(sounds.puntaje ?? null)
+      soundGanadorRef.current = toLocalFile(sounds.ganador ?? null)
     })
     ;window.electronAPI.getLogoPath().then((p: string | null) => {
       setLogoUrl(toLocalFile(p))
@@ -558,6 +560,7 @@ export function ProjectionApp() {
     const unsub = window.electronAPI.onImprosibleFinalStart((winnerId) => {
       setImprosibleWinnerId(winnerId)
       setImprosiblePhase('final')
+      if (soundGanadorRef.current) playAudio(soundGanadorRef.current, volumeRef.current)
     })
     return unsub
   }, [])

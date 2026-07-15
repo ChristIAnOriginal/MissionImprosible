@@ -11,23 +11,7 @@
   "curtainLogoColor": "white",
   "curtainWobbleEnabled": false,
   "curtainWobbleDuration": 0.1,
-  "missionPreloads": {
-    "Protesto": {
-      "allPlay": true,
-      "assignments": {
-        "1": "impro",
-        "2": "sible",
-        "3": "sible"
-      }
-    },
-    "Lugares secretos": {
-      "allPlay": false,
-      "assignments": {
-        "1": "impro",
-        "2": "sible"
-      }
-    }
-  },
+  "missionPreloads": {},
   "ratingDuration": 10,
   "ratingAutoClear": true,
   "improsibleWinnerLabel": "GANADOR",
