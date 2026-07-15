@@ -413,6 +413,9 @@
 
 .mission-card {
   flex: 1;
+  /* Sin esto, min-width:auto = ancho del nombre (nowrap), que gana sobre
+     max-width e infla la tarjeta; con aspect-ratio eso la alarga hacia abajo. */
+  min-width: 0;
   max-width: 22vw;
   /* Misma proporción que .participant-card en la vista de puntuaciones, para
      que el cuadro de la foto no se alargue al iniciar una misión. */
