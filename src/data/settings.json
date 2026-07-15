@@ -13,10 +13,11 @@
   "curtainWobbleDuration": 0.1,
   "missionPreloads": {
     "Protesto": {
-      "allPlay": false,
+      "allPlay": true,
       "assignments": {
         "1": "impro",
-        "2": "sible"
+        "2": "sible",
+        "3": "sible"
       }
     },
     "Lugares secretos": {
@@ -28,5 +29,8 @@
     }
   },
   "ratingDuration": 10,
-  "ratingAutoClear": true
+  "ratingAutoClear": true,
+  "improsibleWinnerLabel": "GANADOR",
+  "improsibleWinnerSublabel": "¡Ha sido seleccionado como el mejor agente!",
+  "improsibleWinnerColor": "#f97316"
 }

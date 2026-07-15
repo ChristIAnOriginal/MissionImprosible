@@ -44,6 +44,13 @@
   --space-6: 32px;
   --space-8: 48px;
 
+  /* ── Proyección ──
+     Proporción (ancho/alto) de la tarjeta de participante en la vista de
+     puntuaciones: 4 tarjetas de ~22.7vw sobre la altura restante tras el
+     header y la barra de subtítulo. La vista de misión la reutiliza para que
+     el cuadro de la foto sea idéntico en ambas pantallas. */
+  --card-aspect: 7 / 12;
+
   /* ── Tipografía ──
      "Modo anciano": subir --font-size-base escala todo lo definido en rem. */
   --font-size-base: 16px;

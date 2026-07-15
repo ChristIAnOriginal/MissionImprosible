@@ -406,13 +406,18 @@
   display: flex;
   flex-direction: row;
   gap: 1.5vw;
-  align-items: stretch;
+  /* Centrar (no estirar): estirar alargaba la tarjeta a toda la arena. */
+  align-items: center;
   justify-content: center;
 }
 
 .mission-card {
   flex: 1;
   max-width: 22vw;
+  /* Misma proporción que .participant-card en la vista de puntuaciones, para
+     que el cuadro de la foto no se alargue al iniciar una misión. */
+  aspect-ratio: var(--card-aspect);
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   border: 0.4vh solid #888;
