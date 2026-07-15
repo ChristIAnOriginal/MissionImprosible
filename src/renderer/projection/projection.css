@@ -1118,7 +1118,9 @@
   color: var(--color-accent);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  text-shadow: 0 0 24px rgba(249,115,22,0.45), 2px 2px 0 rgba(0,0,0,0.8);
+  text-align: center;
+  /* El resplandor sigue al color de fuente configurado desde el control. */
+  text-shadow: 0 0 28px currentColor, 2px 2px 0 rgba(0,0,0,0.8);
 }
 
 .winner-sublabel {
@@ -1128,6 +1130,7 @@
   text-transform: uppercase;
   letter-spacing: 0.35em;
   margin-top: 0.4em;
+  text-align: center;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7);
 }
 

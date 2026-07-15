@@ -879,8 +879,10 @@ export function ProjectionApp() {
                   }
                 </div>
                 <div className="winner-name">{winner?.name}</div>
-                <div className="winner-label">¡GANADOR!</div>
-                <div className="winner-sublabel">MEJOR AGENTE</div>
+                <div className="winner-label" style={{ color: state.improsibleWinnerColor ?? '#f97316' }}>
+                  {state.improsibleWinnerLabel ?? '¡GANADOR!'}
+                </div>
+                <div className="winner-sublabel">{state.improsibleWinnerSublabel ?? 'MEJOR AGENTE'}</div>
               </div>
             </div>
           </div>

@@ -1478,6 +1478,66 @@ export function ControlApp() {
                     </div>
                   )
                 })()}
+
+                {/* Mensaje final — totalmente configurable */}
+                <div className="improsible-final-message">
+                  <div className="improsible-winner-selector-title">Mensaje final</div>
+
+                  <div className="ifm-field">
+                    <span className="ifm-label">Mensaje principal</span>
+                    <input
+                      className="ifm-input"
+                      value={state.improsibleWinnerLabel ?? '¡GANADOR!'}
+                      placeholder="¡GANADOR!"
+                      onChange={e => window.electronAPI.updateAppState({ improsibleWinnerLabel: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="ifm-field">
+                    <span className="ifm-label">Mensaje secundario</span>
+                    <input
+                      className="ifm-input"
+                      value={state.improsibleWinnerSublabel ?? 'MEJOR AGENTE'}
+                      placeholder="MEJOR AGENTE"
+                      onChange={e => window.electronAPI.updateAppState({ improsibleWinnerSublabel: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="ifm-field">
+                    <span className="ifm-label">Color de la fuente</span>
+                    <div className="ifm-color">
+                      <input
+                        type="color"
+                        className="ifm-swatch"
+                        value={state.improsibleWinnerColor ?? '#f97316'}
+                        onChange={e => window.electronAPI.updateAppState({ improsibleWinnerColor: e.target.value })}
+                      />
+                      <input
+                        type="text"
+                        className="ifm-input ifm-input--hex"
+                        value={state.improsibleWinnerColor ?? '#f97316'}
+                        placeholder="#f97316"
+                        onChange={e => window.electronAPI.updateAppState({ improsibleWinnerColor: e.target.value })}
+                      />
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => window.electronAPI.updateAppState({ improsibleWinnerColor: '#f97316' })}
+                      >
+                        Restablecer
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="ifm-preview">
+                    <span className="ifm-preview-hint">Vista previa</span>
+                    <span className="ifm-preview-label" style={{ color: state.improsibleWinnerColor ?? '#f97316' }}>
+                      {state.improsibleWinnerLabel || '¡GANADOR!'}
+                    </span>
+                    <span className="ifm-preview-sub">
+                      {state.improsibleWinnerSublabel || 'MEJOR AGENTE'}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
 

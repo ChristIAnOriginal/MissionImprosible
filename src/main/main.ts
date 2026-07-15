@@ -71,6 +71,9 @@ let appState: AppState = {
   missionPreloads: savedSettings.missionPreloads,
   ratingDuration: savedSettings.ratingDuration,
   ratingAutoClear: savedSettings.ratingAutoClear,
+  improsibleWinnerLabel: savedSettings.improsibleWinnerLabel,
+  improsibleWinnerSublabel: savedSettings.improsibleWinnerSublabel,
+  improsibleWinnerColor: savedSettings.improsibleWinnerColor,
   curtain: true,
 }
 
@@ -168,6 +171,7 @@ const PERSISTED_KEYS: (keyof AppState)[] = [
   'curtainPulseDuration', 'curtainPulseColor', 'curtainLogoColor',
   'curtainWobbleEnabled', 'curtainWobbleDuration', 'missionPreloads',
   'ratingDuration', 'ratingAutoClear',
+  'improsibleWinnerLabel', 'improsibleWinnerSublabel', 'improsibleWinnerColor',
 ]
 
 handleSend(ipcMain, 'appstate:update', (update) => {
@@ -190,6 +194,9 @@ handleSend(ipcMain, 'appstate:update', (update) => {
       missionPreloads: appState.missionPreloads ?? {},
       ratingDuration: appState.ratingDuration ?? 5,
       ratingAutoClear: appState.ratingAutoClear ?? true,
+      improsibleWinnerLabel: appState.improsibleWinnerLabel ?? '¡GANADOR!',
+      improsibleWinnerSublabel: appState.improsibleWinnerSublabel ?? 'MEJOR AGENTE',
+      improsibleWinnerColor: appState.improsibleWinnerColor ?? '#f97316',
     })
   }
 })

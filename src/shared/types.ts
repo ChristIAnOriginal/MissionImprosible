@@ -50,6 +50,9 @@ export interface AppState {
   missionPreloads?: Record<string, MissionPreload>
   improsibleFinalists?: [string, string] | null
   improsibleWinner?: string | null
+  improsibleWinnerLabel?: string
+  improsibleWinnerSublabel?: string
+  improsibleWinnerColor?: string
   ratingDuration?: number
   ratingAutoClear?: boolean
 }

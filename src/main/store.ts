@@ -117,6 +117,9 @@ export interface Settings {
   missionPreloads: Record<string, MissionPreload>
   ratingDuration: number
   ratingAutoClear: boolean
+  improsibleWinnerLabel: string
+  improsibleWinnerSublabel: string
+  improsibleWinnerColor: string
 }
 
 const SETTINGS_DEFAULTS: Settings = {
@@ -135,6 +138,9 @@ const SETTINGS_DEFAULTS: Settings = {
   missionPreloads: {},
   ratingDuration: 5,
   ratingAutoClear: true,
+  improsibleWinnerLabel: '¡GANADOR!',
+  improsibleWinnerSublabel: 'MEJOR AGENTE',
+  improsibleWinnerColor: '#f97316',
 }
 
 export function getSettings(): Settings {
