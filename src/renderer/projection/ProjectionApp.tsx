@@ -601,96 +601,55 @@ export function ProjectionApp() {
     const activePlayers = new Set(state.participants.slice(0, state.visibleParticipants).map(p => p.id))
     const activeList = state.participants.filter(p => activePlayers.has(p.id))
 
+    // Misma tarjeta que la vista de puntuaciones, sin el puntaje.
+    const missionCard = (p: AppState['participants'][number]) => (
+      <div key={p.id} className="participant-card">
+        <div className="participant-photo" style={{ filter: p.eliminated ? 'grayscale(100%)' : 'none', transition: 'filter 0.4s' }}>
+          {p.photoPath
+            ? <img src={toLocalFile(p.photoPath) ?? ''} alt={p.name} />
+            : <div className="photo-placeholder">FOTO</div>}
+          {activeRatings && activeRatings[p.id] && (
+            <div className={`rating-badge${ratingsExiting ? ' rating-badge--exiting' : ''}`} style={{ color: RATING_COLORS[activeRatings[p.id]] }}>
+              {RATING_LABELS[activeRatings[p.id]]}
+            </div>
+          )}
+        </div>
+        <div className="participant-name" style={{ background: p.eliminated ? '#4b5563' : undefined, transition: 'background 0.4s' }}>{p.name}</div>
+      </div>
+    )
+
+    const missionHeader = (
+      <div className="mission-header-bar">
+        <h1 className="header-title">
+          <span className="title-mision">MISIÓN </span>
+          <span className="title-impro">IMPRO</span>
+          <span className="title-sible">SIBLE</span>
+        </h1>
+        <div className="mission-name-label">{mv!.name}</div>
+      </div>
+    )
+
     if (mv!.allPlay) {
       return (
         <div className={`projection-root mission-view${missionExiting ? ' mission-view--exiting' : ''}`}>
-          <div className="mission-header-bar">
-            <h1 className="header-title">
-              <span className="title-mision">MISIÓN </span>
-              <span className="title-impro">IMPRO</span>
-              <span className="title-sible">SIBLE</span>
-            </h1>
-            <div className="mission-name-label">{mv!.name}</div>
-          </div>
-          <div className="mission-arena mission-arena--allplay">
-            <div className="mission-team mission-team--allplay">
-              <div className="mission-team-cards">
-                {activeList.map(p => (
-                  <div key={p.id} className="mission-card">
-                    <div className="mission-card-photo" style={{ filter: p.eliminated ? 'grayscale(100%)' : 'none', transition: 'filter 0.4s' }}>
-                      {p.photoPath
-                        ? <img src={toLocalFile(p.photoPath) ?? ''} alt={p.name} />
-                        : <div className="photo-placeholder">FOTO</div>}
-                      {activeRatings && activeRatings[p.id] && (
-                        <div className={`rating-badge${ratingsExiting ? ' rating-badge--exiting' : ''}`} style={{ color: RATING_COLORS[activeRatings[p.id]] }}>
-                          {RATING_LABELS[activeRatings[p.id]]}
-                        </div>
-                      )}
-                    </div>
-                    <div className="mission-card-name" style={{ background: p.eliminated ? '#4b5563' : undefined, transition: 'background 0.4s' }}>{p.name}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {missionHeader}
+          <div className="participants">
+            {activeList.map(missionCard)}
           </div>
         </div>
       )
     }
 
+    // Duelo: siempre 1 vs 1, con el VS ocupando la posición central.
     const impro = state.participants.filter(p => mv!.teamImpro.includes(p.id) && activePlayers.has(p.id))
     const sible = state.participants.filter(p => mv!.teamSible.includes(p.id) && activePlayers.has(p.id))
     return (
       <div className={`projection-root mission-view${missionExiting ? ' mission-view--exiting' : ''}`}>
-        <div className="mission-header-bar">
-          <h1 className="header-title">
-            <span className="title-mision">MISIÓN </span>
-            <span className="title-impro">IMPRO</span>
-            <span className="title-sible">SIBLE</span>
-          </h1>
-          <div className="mission-name-label">{mv!.name}</div>
-        </div>
-        <div className="mission-arena">
-          <div className="mission-team mission-team--impro">
-            <div className="mission-team-cards">
-              {impro.map(p => (
-                <div key={p.id} className="mission-card">
-                  <div className="mission-card-photo" style={{ filter: p.eliminated ? 'grayscale(100%)' : 'none', transition: 'filter 0.4s' }}>
-                    {p.photoPath
-                      ? <img src={toLocalFile(p.photoPath) ?? ''} alt={p.name} />
-                      : <div className="photo-placeholder">FOTO</div>}
-                    {activeRatings && activeRatings[p.id] && (
-                      <div className={`rating-badge${ratingsExiting ? ' rating-badge--exiting' : ''}`} style={{ color: RATING_COLORS[activeRatings[p.id]] }}>
-                        {RATING_LABELS[activeRatings[p.id]]}
-                      </div>
-                    )}
-                  </div>
-                  <div className="mission-card-name" style={{ background: p.eliminated ? '#4b5563' : undefined, transition: 'background 0.4s' }}>{p.name}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
+        {missionHeader}
+        <div className="participants participants--duel">
+          {impro.map(missionCard)}
           <div className="mission-vs">VS</div>
-
-          <div className="mission-team mission-team--sible">
-            <div className="mission-team-cards">
-              {sible.map(p => (
-                <div key={p.id} className="mission-card">
-                  <div className="mission-card-photo" style={{ filter: p.eliminated ? 'grayscale(100%)' : 'none', transition: 'filter 0.4s' }}>
-                    {p.photoPath
-                      ? <img src={toLocalFile(p.photoPath) ?? ''} alt={p.name} />
-                      : <div className="photo-placeholder">FOTO</div>}
-                    {activeRatings && activeRatings[p.id] && (
-                      <div className={`rating-badge${ratingsExiting ? ' rating-badge--exiting' : ''}`} style={{ color: RATING_COLORS[activeRatings[p.id]] }}>
-                        {RATING_LABELS[activeRatings[p.id]]}
-                      </div>
-                    )}
-                  </div>
-                  <div className="mission-card-name" style={{ background: p.eliminated ? '#4b5563' : undefined, transition: 'background 0.4s' }}>{p.name}</div>
-                </div>
-              ))}
-            </div>
-          </div>
+          {sible.map(missionCard)}
         </div>
       </div>
     )

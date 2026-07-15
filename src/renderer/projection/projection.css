@@ -253,6 +253,9 @@
 
 .participant-card {
   flex: 1;
+  /* min-width:auto tomaría el ancho del nombre (nowrap) y ganaría sobre
+     max-width/flex, descuadrando las tarjetas e impidiendo el ellipsis. */
+  min-width: 0;
   display: flex;
   flex-direction: column;
   border: 0.4vh solid #888;
@@ -359,101 +362,15 @@
   text-transform: uppercase;
 }
 
-.mission-arena {
-  flex: 1;
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  min-height: 0;
-  padding: 3vh 2vw;
-}
-
-.mission-team {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2vh;
-}
-
-.mission-arena--allplay {
+/* Duelo 1v1: las mismas tarjetas que en puntuaciones, agrupadas al centro con
+   el VS en la posición del medio. El tope de ancho las deja del tamaño exacto
+   que tienen en la tabla de puntuaciones (4 tarjetas en 97vw con gaps de 2vw). */
+.participants--duel {
   justify-content: center;
 }
 
-.mission-team--allplay {
-  flex: unset;
-  max-width: 90vw;
-}
-
-.mission-team--allplay .mission-team-cards {
-  flex-wrap: wrap;
-}
-
-.mission-team-label {
-  text-align: center;
-  padding-bottom: 1vh;
-  border-bottom: 0.3vh solid #333;
-}
-
-.team-label-impro, .team-label-sible {
-  font-size: 3vw;
-  font-weight: 900;
-  letter-spacing: 0.15em;
-  color: #9ca3af;
-}
-
-.mission-team-cards {
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-  gap: 1.5vw;
-  /* Centrar (no estirar): estirar alargaba la tarjeta a toda la arena. */
-  align-items: center;
-  justify-content: center;
-}
-
-.mission-card {
-  flex: 1;
-  /* Sin esto, min-width:auto = ancho del nombre (nowrap), que gana sobre
-     max-width e infla la tarjeta; con aspect-ratio eso la alarga hacia abajo. */
-  min-width: 0;
-  max-width: 22vw;
-  /* Misma proporción que .participant-card en la vista de puntuaciones, para
-     que el cuadro de la foto no se alargue al iniciar una misión. */
-  aspect-ratio: var(--card-aspect);
-  max-height: 100%;
-  display: flex;
-  flex-direction: column;
-  border: 0.4vh solid #888;
-  background: #fff;
-  overflow: hidden;
-}
-
-.mission-card-photo {
-  flex: 1;
-  overflow: hidden;
-  background: #fff;
-  min-height: 0;
-  position: relative;
-}
-
-.mission-card-photo img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.mission-card-name {
-  background: var(--color-accent);
-  color: #fff;
-  text-align: center;
-  font-size: 2.5vw;
-  font-weight: 900;
-  padding: 0.8vh 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.participants--duel .participant-card {
+  max-width: 22.75vw;
 }
 
 .mission-vs {
@@ -741,8 +658,7 @@
 }
 
 /* RATING BADGES */
-.participant-photo,
-.mission-card-photo {
+.participant-photo {
   position: relative;
 }
 
@@ -762,10 +678,6 @@
   overflow: hidden;
   animation: rating-in 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
   pointer-events: none;
-}
-
-.mission-card-photo .rating-badge {
-  font-size: clamp(12px, 1.6vw, 36px);
 }
 
 .rating-badge--exiting {
