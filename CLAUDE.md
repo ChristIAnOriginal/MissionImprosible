@@ -1,76 +1,92 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guía para Claude Code (claude.ai/code) al trabajar en este repositorio.
 
-## Commands
+## Qué es esto
+
+Un workspace de apps de escritorio independientes más un lanzador que las agrupa.
+
+```
+ScreenProjection/
+├── dashboard/          Falso Vacío Hub: lanzador que descubre las apps y las arranca
+├── missionimprosible/  App: panel de control + proyección del show
+├── dejavu/             App: temporizador de proyección con rebobinado
+├── habiaunavez/        App: gestor de animaciones (agente: habiaunavez-animaciones)
+├── app4/               (futuras apps: una carpeta cada una)
+└── package.json        Scripts que delegan en cada sub-app
+```
+
+**Cada app es autónoma**: su propio `package.json`, su propio `node_modules`, su propio build
+y su propio estado persistido. No hay código compartido entre apps ni `AppState` común. El
+dashboard nunca importa código de una app: la lanza como **proceso externo**.
+
+## Comandos
+
+Desde la raíz:
 
 ```bash
-npm install          # Install dependencies
-
-npm run build        # Full build (main + preload + both renderers)
-npm run build:main   # Build main process + preload only
-npm run build:control    # Build control renderer only
-npm run build:projection # Build projection renderer only
-
-npm run start        # Full build then launch Electron
-npm run package      # Build + package as Windows NSIS installer
-npm run package:portable # Build + package as Windows portable exe
+npm run install:all   # npm install en dashboard/ y en cada app
+npm run dashboard     # compila y abre el lanzador
+npm run build:all     # compila todo
+npm run package:all   # genera los .exe portables de cada carpeta
+npm run dist          # package:all + ensamblado portable comprimido
 ```
 
-There is no dev server or hot-reload — every change requires a rebuild (`npm run build`) before running `npm run start`. To iterate faster, build only the changed target (e.g. `npm run build:control`) then relaunch.
+`scripts/bundle-portable.mjs` toma el `.exe` más reciente de cada `release/` y arma
+`dist-portable/FalsoVacioHub/` con la estructura que el hub espera descubrir: el ejecutable del
+hub arriba y una carpeta por app con su `release/<app>.exe`, su icono en la misma ruta relativa
+que declara el manifiesto, y un `app.manifest.json` recortado a los campos de ejecución
+(`id`, `name`, `description`, `icon`, `accent`, `portableDir`). Sin fuentes no hay
+`dev`/`build`/`package`, y el panel de detalle deja esos botones desactivados.
 
-## Architecture
+Dentro de una app, se usan sus propios scripts (ver el CLAUDE.md de cada carpeta).
 
-This is a two-window Electron app: a **control panel** window and a **projection screen** window.
+## Añadir una app nueva
 
-### Process boundaries
+1. Crear una carpeta hermana de `dashboard/` con su propio proyecto.
+2. Añadir `app.manifest.json` en su raíz (ver esquema abajo).
+3. Pulsar **Actualizar** en el dashboard.
 
+No hay que tocar el código del dashboard: el descubrimiento es por sistema de archivos.
+
+### `app.manifest.json`
+
+```json
+{
+  "id": "missionimprosible",
+  "name": "Misión Improsible",
+  "description": "Texto de la tarjeta.",
+  "icon": "src/data/img/logo.png",
+  "accent": "#f97316",
+  "dev": { "command": "npm", "args": ["run", "start"] },
+  "build": { "command": "npm", "args": ["run", "build"] },
+  "package": { "command": "npm", "args": ["run", "package:portable"] },
+  "portableDir": "release"
+}
 ```
-src/main/main.ts        — Electron main process: IPC hub, window management, file I/O
-src/main/preload.ts     — contextBridge: exposes electronAPI to renderers
-src/main/store.ts       — JSON persistence (missions, objectives, challenges, settings, sounds)
-src/shared/types.ts     — Shared TypeScript types (AppState, Participant, MissionView, etc.)
 
-src/renderer/control/   — Control panel React app (ControlApp.tsx + MisionesTab.tsx)
-src/renderer/projection/— Projection screen React app (ProjectionApp.tsx)
-src/renderer/electron-api.d.ts — Global Window.electronAPI type declarations
-src/renderer/utils/audio.ts    — Audio playback helpers (playAudio, playAudioTimed, getAudioDuration)
-src/renderer/constants/ — Static data constants (ratings, tabs, challenge/mission/objective labels)
-```
+Todos los campos salvo `name` son opcionales. Si falta el manifiesto, el dashboard sintetiza uno
+desde el `package.json` de la carpeta (`start`/`dev` → dev, `build` → build,
+`package:portable`/`package` → package). `portableDir` es la carpeta de salida de
+electron-builder; el dashboard toma de ahí el `.exe` más reciente.
 
-### State management
+## Cómo arranca las apps el dashboard
 
-`AppState` lives in the main process (`appState` in `main.ts`). Both renderers receive state via IPC:
-- Control sends `appstate:update` → main updates and re-broadcasts `state:update` to all windows
-- Projection listens to `state:update` and re-renders
+- **Ejecutable**: `spawn` directo del `.exe` portable encontrado en `portableDir`.
+- **Desarrollo**: `spawn` del comando `dev` con `shell: true` y `cwd` en la carpeta de la app;
+  stdout/stderr se vuelcan al panel de logs.
 
-Fields in `PERSISTED_KEYS` are automatically saved to `src/data/settings.json` on every update. All other `AppState` fields reset on app restart.
+En Windows `shell: true` crea un `cmd.exe` intermedio, así que detener una app usa
+`taskkill /T /F` sobre el árbol de procesos. Al cerrar el dashboard se matan todos los hijos
+(`before-quit` → `stopAll()`).
 
-### IPC pattern
+## Raíz del workspace
 
-All renderer↔main communication goes through `window.electronAPI` (defined in `preload.ts`, typed in `electron-api.d.ts`). The projection renderer must have `/// <reference path="../electron-api.d.ts" />` at the top of `ProjectionApp.tsx` because the `.d.ts` uses module-style imports.
+`resolveWorkspaceRoot()` en `dashboard/src/main/main.ts`:
 
-Key channels:
-- `appstate:update` — partial AppState update, broadcast to all renderers
-- `state:get` / `state:update` — request/receive full state snapshot
-- `mission:announce` / `objective:announce` — trigger cinematic overlays in projection
-- `roulette:start` — start challenge roulette animation in projection
-- `rating:show` / `rating:clear` — show/hide performance ratings overlay
+- `APPS_ROOT` si está definida (útil para pruebas),
+- empaquetado: `PORTABLE_EXECUTABLE_DIR` (o la carpeta del ejecutable),
+- en desarrollo: `../../..` desde `dashboard/dist/main/`.
 
-### Data files (`src/data/`)
-
-JSON files are the source of truth for missions, objectives, challenges, cinematics, and sounds. `store.ts` reads and writes them. Audio paths stored in JSON are **relative** (e.g. `audio/misiones/M_Switch.wav`); `resolveAudioPath()` in `store.ts` converts them to absolute paths before sending to renderers. The renderers then call `toLocalFile()` to convert absolute paths to `localfile://` URLs served by the custom Electron protocol handler.
-
-When packaged, `src/data/` is copied to `resources/data/` via `extraResources` in `electron-builder` config. `getDataDir()` in `store.ts` handles both dev and packaged paths.
-
-### Audio timing
-
-WAV files may report `Infinity` for duration via `loadedmetadata`. `playAudioTimed()` and `getAudioDuration()` in `audio.ts` handle this by seeking to `1e101` to force the browser to calculate the real duration via `durationchange`. Always use these helpers rather than `new Audio()` directly when duration matters.
-
-### Curtain / transition timing
-
-Use `useLayoutEffect` (not `useEffect`) for state that controls what's mounted/visible on screen to avoid single-frame flashes between transitions. The mission view exit, curtain mounting, and roulette exit all use this pattern.
-
-### Build system
-
-Four separate Vite configs — one for main/preload, two for renderers. Each renderer is a standalone SPA with its own `index.html` root. TypeScript uses two tsconfigs: `tsconfig.main.json` (CommonJS, for Electron main) and `tsconfig.renderer.json` (ESNext/bundler, for both React renderers).
+Es decir: el `.exe` del dashboard debe quedar **junto a las carpetas de las apps** para
+descubrirlas.

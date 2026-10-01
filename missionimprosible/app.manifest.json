@@ -1,0 +1,11 @@
+{
+  "id": "missionimprosible",
+  "name": "Misión Improsible",
+  "description": "Show de improvisación: panel de control + pantalla de proyección con misiones, objetivos, desafíos y cinemáticas.",
+  "icon": "src/data/img/logo.png",
+  "accent": "#f97316",
+  "dev": { "command": "npm", "args": ["run", "start"] },
+  "build": { "command": "npm", "args": ["run", "build"] },
+  "package": { "command": "npm", "args": ["run", "package:portable"] },
+  "portableDir": "release"
+}

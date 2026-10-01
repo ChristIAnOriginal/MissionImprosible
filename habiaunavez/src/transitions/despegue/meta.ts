@@ -1,0 +1,112 @@
+import type { TransitionMeta } from '../../shared/types'
+
+/**
+ * Ficha de "Despegue". Datos puros: sin JSX y sin tocar renderer/.
+ *
+ * Va sincronizada con `assets/audio/despegue.mpeg` (20,4 s): los tramos de la
+ * escena caen donde el audio cambia de fuerza, así que la duración por
+ * defecto es la del audio.
+ */
+export const despegueMeta: TransitionMeta = {
+  id: 'despegue',
+  name: 'Despegue',
+  description: 'Los motores arrancan, la cabina tiembla, las estrellas se estiran y todo acaba en un destello blanco.',
+  from: 'nave-encendida',
+  to: 'cabina-deriva',
+  accent: '#3b7dd8',
+  looks: ['realista'],
+  exitFlash: '#ffffff',
+  params: [
+    {
+      kind: 'number',
+      key: 'durationMs',
+      label: 'Duración',
+      hint: 'Ajustada al audio (20,4 s). Si la cambias, la imagen deja de ir a tiempo con el sonido.',
+      group: 'Ritmo',
+      min: 8000,
+      max: 30000,
+      step: 100,
+      unit: ' ms',
+      default: 20400,
+    },
+    {
+      kind: 'number',
+      key: 'shake',
+      label: 'Temblor',
+      hint: 'A 0 la cabina queda firme',
+      group: 'Ritmo',
+      min: 0,
+      max: 2,
+      step: 0.05,
+      unit: 'x',
+      default: 1,
+    },
+    {
+      kind: 'number',
+      key: 'warp',
+      label: 'Velocidad final',
+      hint: 'Cuánto se estiran las estrellas en el empuje',
+      group: 'Ritmo',
+      min: 1,
+      max: 4,
+      step: 0.1,
+      unit: 'x',
+      default: 2.6,
+    },
+    {
+      kind: 'select',
+      key: 'thrustMode',
+      label: 'Consola durante el empuje',
+      group: 'Ritmo',
+      options: [
+        { value: 'calma', label: 'Calma' },
+        { value: 'alerta', label: 'Alerta' },
+      ],
+      default: 'calma',
+    },
+    {
+      kind: 'number',
+      key: 'flashOutMs',
+      label: 'Salida del destello',
+      hint: 'Lo que tarda la animación de destino en aparecer desde el blanco',
+      group: 'Destello',
+      min: 0,
+      max: 3000,
+      step: 50,
+      unit: ' ms',
+      default: 900,
+    },
+    {
+      kind: 'number',
+      key: 'volume',
+      label: 'Volumen',
+      group: 'Audio',
+      min: 0,
+      max: 1,
+      step: 0.05,
+      default: 1,
+    },
+    {
+      kind: 'number',
+      key: 'moonSize',
+      label: 'Tamaño de la luna',
+      hint: 'Igual que en «Nave encendida» para que el arranque no dé salto. A 0 no hay luna.',
+      group: 'Fuera',
+      min: 0,
+      max: 150,
+      step: 2,
+      default: 62,
+    },
+    {
+      kind: 'number',
+      key: 'starCount',
+      label: 'Estrellas en fuga',
+      hint: 'Igual que la densidad de «Cabina — deriva estelar»',
+      group: 'Fuera',
+      min: 20,
+      max: 400,
+      step: 10,
+      default: 160,
+    },
+  ],
+}

@@ -1,0 +1,11 @@
+{
+  "id": "habiaunavez",
+  "name": "Había una vez",
+  "description": "Gestor de animaciones: cabina de nave hacia el espacio, planetas y fondos en línea gráfica plana.",
+  "icon": "assets/icon.svg",
+  "accent": "#17b498",
+  "dev": { "command": "npm", "args": ["run", "start"] },
+  "build": { "command": "npm", "args": ["run", "build"] },
+  "package": { "command": "npm", "args": ["run", "package:portable"] },
+  "portableDir": "release"
+}

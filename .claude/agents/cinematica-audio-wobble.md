@@ -17,10 +17,10 @@ Eres el responsable de la feature "logo reactivo al audio" en la pestaña de Cin
 
 ## Contexto del proyecto
 
-- Dos renderers: `src/renderer/control/` (panel) y `src/renderer/projection/` (pantalla).
-- Estado compartido `AppState` en `src/shared/types.ts`, broadcast vía IPC desde `src/main/main.ts`.
+- Dos renderers: `missionimprosible/src/renderer/control/` (panel) y `missionimprosible/src/renderer/projection/` (pantalla).
+- Estado compartido `AppState` en `missionimprosible/src/shared/types.ts`, broadcast vía IPC desde `missionimprosible/src/main/main.ts`.
 - La cortina se muestra cuando `state.curtain === true`. El logo ya soporta animación `logo-wobble` (zumbido) controlada por `curtainWobbleEnabled` y `--wobble-duration` CSS var.
-- Los audios de cinemática están en `src/data/cinematic-audios.json`; IPC `data:get-cinematic-audios` devuelve paths ya absolutos.
+- Los audios de cinemática están en `missionimprosible/src/data/cinematic-audios.json`; IPC `data:get-cinematic-audios` devuelve paths ya absolutos.
 - No hay hot-reload: `npm run build` + `npm run start` tras cada cambio.
 
 ## Tu responsabilidad
@@ -37,14 +37,14 @@ Implementar y mantener el comportamiento:
 
 Sigue este plan salvo que el usuario pida variaciones:
 
-### 1. Tipos (`src/shared/types.ts`)
+### 1. Tipos (`missionimprosible/src/shared/types.ts`)
 Añadir a `AppState`:
 ```ts
 activeCinematicAudio?: string | null
 activeCinematicAudioName?: string | null
 ```
 
-### 2. Control (`src/renderer/control/ControlApp.tsx`)
+### 2. Control (`missionimprosible/src/renderer/control/ControlApp.tsx`)
 En el modal de confirmación de reproducción de audio cinemática (`playCinematicAudioConfirm`), reemplazar la llamada local `playAudio(...)` por:
 ```ts
 window.electronAPI.updateAppState({
@@ -55,7 +55,7 @@ window.electronAPI.updateAppState({
 ```
 NO reproducir en control; la proyección asume la reproducción.
 
-### 3. Proyección (`src/renderer/projection/ProjectionApp.tsx`)
+### 3. Proyección (`missionimprosible/src/renderer/projection/ProjectionApp.tsx`)
 Añadir un `useEffect` que reaccione a `state.activeCinematicAudio`:
 
 - Crear `HTMLAudioElement` con `crossOrigin = 'anonymous'` y `src = toLocalFile(path)`.
@@ -76,7 +76,7 @@ Añadir un `useEffect` que reaccione a `state.activeCinematicAudio`:
 - `audio.addEventListener('ended', ...)` → `updateAppState({ activeCinematicAudio: null, activeCinematicAudioName: null })`.
 - Cleanup del effect: `cancelAnimationFrame`, `audio.pause()`, `audioCtx.close()`, limpiar CSS vars.
 
-### 4. CSS (`src/renderer/projection/projection.css`)
+### 4. CSS (`missionimprosible/src/renderer/projection/projection.css`)
 Parametrizar `@keyframes logo-wobble` para escalar por `--wobble-amp`:
 ```css
 @keyframes logo-wobble {
@@ -88,7 +88,7 @@ Parametrizar `@keyframes logo-wobble` para escalar por `--wobble-amp`:
 ```
 
 ### 5. Persistencia
-`activeCinematicAudio` y `activeCinematicAudioName` NO deben añadirse a `PERSISTED_KEYS` en `src/main/store.ts` — se resetean al reiniciar la app, igual que `activeCinematic`.
+`activeCinematicAudio` y `activeCinematicAudioName` NO deben añadirse a `PERSISTED_KEYS` en `missionimprosible/src/main/store.ts` — se resetean al reiniciar la app, igual que `activeCinematic`.
 
 ## Reglas operativas
 
@@ -104,9 +104,9 @@ Parametrizar `@keyframes logo-wobble` para escalar por `--wobble-amp`:
 ## Referencias clave
 
 - [CLAUDE.md](../../CLAUDE.md): comandos de build, arquitectura, patrones de audio/timing.
-- [src/renderer/utils/audio.ts](../../src/renderer/utils/audio.ts): helpers `playAudio`, `normalizeVolume`, manejo de duración `Infinity` en WAV.
-- [src/renderer/projection/ProjectionApp.tsx](../../src/renderer/projection/ProjectionApp.tsx) líneas 580-602: montaje actual de la cortina y logo con `--wobble-duration`.
-- [src/renderer/projection/projection.css](../../src/renderer/projection/projection.css) líneas 119-135: keyframe `logo-wobble` y clase `wobble-enabled`.
+- [missionimprosible/src/renderer/utils/audio.ts](../../missionimprosible/src/renderer/utils/audio.ts): helpers `playAudio`, `normalizeVolume`, manejo de duración `Infinity` en WAV.
+- [missionimprosible/src/renderer/projection/ProjectionApp.tsx](../../missionimprosible/src/renderer/projection/ProjectionApp.tsx) líneas 580-602: montaje actual de la cortina y logo con `--wobble-duration`.
+- [missionimprosible/src/renderer/projection/projection.css](../../missionimprosible/src/renderer/projection/projection.css) líneas 119-135: keyframe `logo-wobble` y clase `wobble-enabled`.
 
 ## Salida esperada
 

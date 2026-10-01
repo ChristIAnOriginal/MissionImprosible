@@ -1,0 +1,29 @@
+{
+  "volume": 100,
+  "overlayOpacity": 80,
+  "rouletteTickBase": 1170,
+  "rouletteTickRange": 70,
+  "curtainFlipEnabled": false,
+  "curtainFlipDuration": 6,
+  "curtainPulseEnabled": false,
+  "curtainPulseDuration": 6,
+  "curtainPulseColor": "#f97316",
+  "curtainLogoColor": "white",
+  "curtainWobbleEnabled": false,
+  "curtainWobbleDuration": 0.1,
+  "missionPreloads": {},
+  "ratingDuration": 10,
+  "ratingAutoClear": true,
+  "improsibleWinnerLabel": "GANADOR",
+  "improsibleWinnerSublabel": "¡Ha sido seleccionado como el mejor agente!",
+  "improsibleWinnerColor": "#f97316",
+  "introLocationText": "La bastijaus",
+  "introTimings": {
+    "code-type": 57.6,
+    "alarm": 62.5,
+    "destruct": 64.4,
+    "end": 68,
+    "protocol-evaluate": 53,
+    "protocol-observe": 51.9
+  }
+}

@@ -20,10 +20,10 @@ Eres el responsable de la arquitectura y escalabilidad del proyecto ScreenProjec
 
 ## Contexto del proyecto
 
-- Dos renderers independientes: `src/renderer/control/` (panel) y `src/renderer/projection/` (proyección).
-- Estado compartido `AppState` en `src/shared/types.ts`, autoritativo en el proceso main (`src/main/main.ts`), broadcast vía IPC.
-- Bridge en `src/main/preload.ts` expone `window.electronAPI`, tipado en `src/renderer/electron-api.d.ts`.
-- Persistencia: JSON en `src/data/` leído/escrito por `src/main/store.ts`; audio/imagenes referenciadas con rutas relativas y resueltas vía `resolveAudioPath()`.
+- Dos renderers independientes: `missionimprosible/src/renderer/control/` (panel) y `missionimprosible/src/renderer/projection/` (proyección).
+- Estado compartido `AppState` en `missionimprosible/src/shared/types.ts`, autoritativo en el proceso main (`missionimprosible/src/main/main.ts`), broadcast vía IPC.
+- Bridge en `missionimprosible/src/main/preload.ts` expone `window.electronAPI`, tipado en `missionimprosible/src/renderer/electron-api.d.ts`.
+- Persistencia: JSON en `missionimprosible/src/data/` leído/escrito por `missionimprosible/src/main/store.ts`; audio/imagenes referenciadas con rutas relativas y resueltas vía `resolveAudioPath()`.
 - Build: cuatro Vite configs (main, preload, control, projection). No hay HMR; cada cambio requiere `npm run build` (o `build:control` / `build:projection`).
 
 ## Estado actual (diagnóstico a fecha 2026-04-23)
@@ -60,7 +60,7 @@ Ejecutar por **fases**. Cada fase debe compilar y dejar la app funcional. No acu
 - Vitest setup para lógica pura (`store.ts`, reducers, helpers de audio).
 
 ### Fase 1 — IPC como fuente única de verdad
-- Crear `src/shared/ipc.ts` con una discriminated union que liste TODOS los canales y payloads:
+- Crear `missionimprosible/src/shared/ipc.ts` con una discriminated union que liste TODOS los canales y payloads:
   ```ts
   export type IpcMessage =
     | { channel: 'state:update'; payload: AppState }
@@ -91,7 +91,7 @@ interface AppState {
 ### Fase 3 — Split de ControlApp y ProjectionApp por feature
 Estructura objetivo:
 ```
-src/renderer/control/
+missionimprosible/src/renderer/control/
   ControlApp.tsx          ← solo layout + tab router (< 200 líneas)
   topbar/
     Topbar.tsx
@@ -116,7 +116,7 @@ src/renderer/control/
 ```
 Igual para projection:
 ```
-src/renderer/projection/
+missionimprosible/src/renderer/projection/
   ProjectionApp.tsx       ← layout + conexión estado
   overlays/
     MissionAnnounceOverlay.tsx
@@ -138,13 +138,13 @@ Objetivo: que los componentes JSX no tengan más `setTimeout` directos.
 
 ### Fase 5 — CSS por feature + design tokens
 - Mover reglas a `<feature>/<Component>.module.css`.
-- Crear `src/renderer/design-tokens.css` (o `.ts`) con variables:
+- Crear `missionimprosible/src/renderer/design-tokens.css` (o `.ts`) con variables:
   - `--color-accent: #f97316`, `--color-danger: #ef4444`, etc.
   - `--space-1 ... --space-8`, `--font-size-base`, `--font-size-lg`.
 - **Modo anciano** se resuelve cambiando `--font-size-base` en el root (no con `zoom`).
 
 ### Fase 6 — Validación de datos
-- Añadir Zod. Esquemas en `src/shared/schemas/` para `missions.json`, `objectives.json`, `challenges.json`, `sounds.json`, `settings.json`.
+- Añadir Zod. Esquemas en `missionimprosible/src/shared/schemas/` para `missions.json`, `objectives.json`, `challenges.json`, `sounds.json`, `settings.json`.
 - `store.ts` valida en load y lanza error descriptivo si un JSON es inválido.
 - Cada esquema tiene `version` y migración.
 
@@ -186,7 +186,7 @@ Si el padre (o el usuario) pide algo que degrada la arquitectura, presenta una a
 - ❌ "Pon el nuevo botón X con un `style={{ color: '#f97316', fontSize: 18 }}` inline"
   - ✅ Propuesta: usar `var(--color-accent)` y clase `.btn--lg`.
 - ❌ "Crea un canal IPC `foo:bar` rápido en `main.ts`"
-  - ✅ Propuesta: añadir entrada a `src/shared/ipc.ts` y usar el helper tipado.
+  - ✅ Propuesta: añadir entrada a `missionimprosible/src/shared/ipc.ts` y usar el helper tipado.
 
 Si la urgencia justifica saltarse una regla (ej: hotfix de demo en 10 min), marca con `// TODO(arch):` y crea una nota en este mismo documento en la sección "Deuda acumulada".
 
@@ -194,8 +194,8 @@ Si la urgencia justifica saltarse una regla (ej: hotfix de demo en 10 min), marc
 
 (Mantener esta sección cuando se salten invariantes. Un bullet por deuda: archivo, línea, razón, fase en la que se paga.)
 
-- `src/renderer/control/ProjectionPreview.tsx:10` — `setTimeout` cast a `Timeout` (error TS pre-existente). No es de IPC; se arregla cuando la Fase 4 migre timers a hooks.
-- `src/renderer/control/ControlApp.tsx` y `src/renderer/projection/ProjectionApp.tsx` — siguen usando `window.electronAPI` (no los helpers tipados directamente). Es intencional para Fase 1: la facade mantiene la API. La migración a `sendIpc/invokeIpc` directos se hará en Fase 3 cuando se divida por feature.
+- `missionimprosible/src/renderer/control/ProjectionPreview.tsx:10` — `setTimeout` cast a `Timeout` (error TS pre-existente). No es de IPC; se arregla cuando la Fase 4 migre timers a hooks.
+- `missionimprosible/src/renderer/control/ControlApp.tsx` y `missionimprosible/src/renderer/projection/ProjectionApp.tsx` — siguen usando `window.electronAPI` (no los helpers tipados directamente). Es intencional para Fase 1: la facade mantiene la API. La migración a `sendIpc/invokeIpc` directos se hará en Fase 3 cuando se divida por feature.
 
 ## Salida esperada al terminar una tarea
 

@@ -1,0 +1,97 @@
+import type { AnimationMeta } from '../../shared/types'
+import { ACCENT } from '../../shared/palette'
+
+/** Ficha de "Trono del rey". Datos puros: sin JSX y sin importar nada de renderer/. */
+export const tronoReyMeta: AnimationMeta = {
+  id: 'trono-rey',
+  name: 'Trono del rey',
+  description: 'Fondo: el salón del trono, con alfombra, estandartes, antorchas y luz entrando por los ventanales.',
+  accent: ACCENT.red,
+  looks: ['realista', 'diorama'],
+  params: [
+    {
+      kind: 'select',
+      key: 'light',
+      label: 'Hora',
+      hint: 'Cambia el cielo de los ventanales y cuánto pesan las antorchas',
+      group: 'Luz',
+      options: [
+        { value: 'dia', label: 'Día' },
+        { value: 'atardecer', label: 'Atardecer' },
+        { value: 'noche', label: 'Noche' },
+      ],
+      default: 'atardecer',
+    },
+    {
+      kind: 'boolean',
+      key: 'shafts',
+      label: 'Haces de luz',
+      hint: 'La luz de los ventanales sobre el suelo, con polvo flotando',
+      group: 'Luz',
+      default: true,
+    },
+    {
+      kind: 'boolean',
+      key: 'torches',
+      label: 'Antorchas',
+      group: 'Luz',
+      default: true,
+    },
+    {
+      kind: 'boolean',
+      key: 'chandelier',
+      label: 'Candelabro',
+      group: 'Luz',
+      default: true,
+    },
+    {
+      kind: 'color',
+      key: 'metalColor',
+      label: 'Metal del trono',
+      group: 'Colores',
+      default: ACCENT.amber,
+    },
+    {
+      kind: 'color',
+      key: 'cushionColor',
+      label: 'Tapizado',
+      group: 'Colores',
+      default: ACCENT.red,
+    },
+    {
+      kind: 'color',
+      key: 'carpetColor',
+      label: 'Alfombra',
+      group: 'Colores',
+      default: ACCENT.red,
+    },
+    {
+      kind: 'color',
+      key: 'bannerColor',
+      label: 'Estandartes y dosel',
+      group: 'Colores',
+      default: ACCENT.blue,
+    },
+    {
+      kind: 'number',
+      key: 'flicker',
+      label: 'Llamas',
+      hint: 'Cuánto bailan las llamas. A 0 quedan quietas.',
+      group: 'Movimiento',
+      min: 0,
+      max: 1,
+      step: 0.05,
+      default: 0.6,
+    },
+    {
+      kind: 'number',
+      key: 'sway',
+      label: 'Vaivén de los estandartes',
+      group: 'Movimiento',
+      min: 0,
+      max: 1,
+      step: 0.05,
+      default: 0.5,
+    },
+  ],
+}

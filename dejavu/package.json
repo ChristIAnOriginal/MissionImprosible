@@ -1,0 +1,50 @@
+{
+  "name": "dejavu",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Temporizador de proyección con rebobinado.",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "build:main": "vite build --config vite.main.config.ts && vite build --config vite.preload.config.ts",
+    "build:control": "vite build --config vite.control.config.ts",
+    "build:projection": "vite build --config vite.projection.config.ts",
+    "build": "npm run build:main && npm run build:control && npm run build:projection",
+    "start": "npm run build && electron .",
+    "package:portable": "npm run build && electron-builder --win portable"
+  },
+  "devDependencies": {
+    "@fontsource/arimo": "^5.3.0",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "electron": "^41.2.0",
+    "electron-builder": "^26.8.1",
+    "lucide-react": "^1.8.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.8"
+  },
+  "build": {
+    "appId": "com.falsovacio.dejavu",
+    "productName": "DejaVu",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/main/**/*",
+      "dist/renderer/**/*"
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "executableName": "DejaVu"
+    },
+    "portable": {
+      "unpackDirName": "DejaVu",
+      "requestExecutionLevel": "user"
+    }
+  }
+}

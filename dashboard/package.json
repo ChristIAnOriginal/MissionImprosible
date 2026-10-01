@@ -1,0 +1,48 @@
+{
+  "name": "falso-vacio-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Falso Vacío Hub: descubre las carpetas hermanas con app.manifest.json y las arranca.",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "build:main": "vite build --config vite.main.config.ts && vite build --config vite.preload.config.ts",
+    "build:renderer": "vite build --config vite.renderer.config.ts",
+    "build": "npm run build:main && npm run build:renderer",
+    "start": "npm run build && electron .",
+    "package": "npm run build && electron-builder --win portable"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "electron": "^41.2.0",
+    "electron-builder": "^26.8.1",
+    "lucide-react": "^1.8.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.8"
+  },
+  "build": {
+    "appId": "com.falsovacio.hub",
+    "productName": "Falso Vacío Hub",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/main/**/*",
+      "dist/renderer/**/*"
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "executableName": "FalsoVacioHub"
+    },
+    "portable": {
+      "unpackDirName": "FalsoVacioHub",
+      "requestExecutionLevel": "user"
+    }
+  }
+}

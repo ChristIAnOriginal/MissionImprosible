@@ -33,5 +33,17 @@ Thumbs.db
 .env.local
 
 # User data (audio/images uploaded at runtime)
-src/data/audio/user/
-src/data/images/user/
+**/src/data/audio/user/
+**/src/data/images/user/
+
+# Electron-builder output
+release/
+
+# Distribucion portable ensamblada
+dist-portable/
+
+# Vídeos de ejemplo de Había una vez (se regeneran con npm run render:ejemplos)
+habiaunavez/ejemplos/
+
+# Paquete comprimido de los ejemplos (se regenera)
+habiaunavez/ejemplos.zip

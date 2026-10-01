@@ -1,0 +1,11 @@
+{
+  "id": "dejavu",
+  "name": "DejaVu",
+  "description": "Temporizador de proyección: cuenta atrás a pantalla completa que rebobina el tiempo al llegar a cero.",
+  "icon": "src/assets/icon.svg",
+  "accent": "#38bdf8",
+  "dev": { "command": "npm", "args": ["run", "start"] },
+  "build": { "command": "npm", "args": ["run", "build"] },
+  "package": { "command": "npm", "args": ["run", "package:portable"] },
+  "portableDir": "release"
+}

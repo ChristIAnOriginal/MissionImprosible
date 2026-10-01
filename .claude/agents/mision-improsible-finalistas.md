@@ -17,9 +17,9 @@ Eres el responsable de la feature "Misión Improsible con finalistas" en el proy
 
 ## Contexto del proyecto
 
-- Dos renderers: `src/renderer/control/` (panel) y `src/renderer/projection/` (pantalla en vivo) + `src/renderer/projection/ProjectionView.tsx` (preview dentro del control).
-- Estado compartido `AppState` en `src/shared/types.ts`, broadcast vía IPC desde `src/main/main.ts`.
-- Todo canal renderer↔main pasa por `window.electronAPI` declarado en `src/main/preload.ts` y tipado en `src/renderer/electron-api.d.ts`.
+- Dos renderers: `missionimprosible/src/renderer/control/` (panel) y `missionimprosible/src/renderer/projection/` (pantalla en vivo) + `missionimprosible/src/renderer/projection/ProjectionView.tsx` (preview dentro del control).
+- Estado compartido `AppState` en `missionimprosible/src/shared/types.ts`, broadcast vía IPC desde `missionimprosible/src/main/main.ts`.
+- Todo canal renderer↔main pasa por `window.electronAPI` declarado en `missionimprosible/src/main/preload.ts` y tipado en `missionimprosible/src/renderer/electron-api.d.ts`.
 - No hay hot-reload: tras cada cambio `npm run build` y luego `npm run start`. Para iterar, construye solo el target tocado (`npm run build:control` o `npm run build:projection`).
 - La cortina (`state.curtain === true`) y las calificaciones se superponen en proyección; cualquier overlay de esta feature debe convivir con ellas con `z-index` mayor.
 
@@ -37,20 +37,20 @@ Implementar y mantener el flujo completo:
 
 ## Estado actual relevante (no lo asumas, léelo antes de tocar)
 
-- [src/renderer/control/ControlApp.tsx:1214-1225](../../src/renderer/control/ControlApp.tsx#L1214-L1225) — botón `mission-improsible-btn` a eliminar.
-- [src/renderer/control/ControlApp.tsx:1229-1235](../../src/renderer/control/ControlApp.tsx#L1229-L1235) — contenido vacío actual de la pestaña `improsible`, reemplazarlo.
-- [src/renderer/control/ControlApp.tsx:81](../../src/renderer/control/ControlApp.tsx#L81) — estado `improsibleExecuted` (borrar o adaptar).
-- [src/renderer/control/ControlApp.tsx:123-131](../../src/renderer/control/ControlApp.tsx#L123-L131) y [:297-302](../../src/renderer/control/ControlApp.tsx#L297-L302) — filtrado `regularMissions` que excluye "Misión Improsible". Mantener el filtrado aunque ya no haya botón en Misiones, por si el JSON conserva la entrada.
-- [src/renderer/projection/ProjectionApp.tsx:721-740](../../src/renderer/projection/ProjectionApp.tsx#L721-L740) y [src/renderer/projection/ProjectionView.tsx:163-180](../../src/renderer/projection/ProjectionView.tsx#L163-L180) — overlay `mission-final-overlay` que ya renderiza el título. Reutilizable para la Fase A.
-- [src/renderer/projection/projection.css:673-750](../../src/renderer/projection/projection.css#L673-L750) — keyframes y estilos del título existente.
-- [src/renderer/projection/ProjectionApp.tsx:624-646](../../src/renderer/projection/ProjectionApp.tsx#L624-L646) y equivalente en `ProjectionView.tsx` — grid `.participants` con las cartas a romper en Fase B.
-- [src/main/main.ts:188-190](../../src/main/main.ts#L188-L190) — patrón de broadcast IPC a seguir para los canales nuevos.
+- [missionimprosible/src/renderer/control/ControlApp.tsx:1214-1225](../../missionimprosible/src/renderer/control/ControlApp.tsx#L1214-L1225) — botón `mission-improsible-btn` a eliminar.
+- [missionimprosible/src/renderer/control/ControlApp.tsx:1229-1235](../../missionimprosible/src/renderer/control/ControlApp.tsx#L1229-L1235) — contenido vacío actual de la pestaña `improsible`, reemplazarlo.
+- [missionimprosible/src/renderer/control/ControlApp.tsx:81](../../missionimprosible/src/renderer/control/ControlApp.tsx#L81) — estado `improsibleExecuted` (borrar o adaptar).
+- [missionimprosible/src/renderer/control/ControlApp.tsx:123-131](../../missionimprosible/src/renderer/control/ControlApp.tsx#L123-L131) y [:297-302](../../missionimprosible/src/renderer/control/ControlApp.tsx#L297-L302) — filtrado `regularMissions` que excluye "Misión Improsible". Mantener el filtrado aunque ya no haya botón en Misiones, por si el JSON conserva la entrada.
+- [missionimprosible/src/renderer/projection/ProjectionApp.tsx:721-740](../../missionimprosible/src/renderer/projection/ProjectionApp.tsx#L721-L740) y [missionimprosible/src/renderer/projection/ProjectionView.tsx:163-180](../../missionimprosible/src/renderer/projection/ProjectionView.tsx#L163-L180) — overlay `mission-final-overlay` que ya renderiza el título. Reutilizable para la Fase A.
+- [missionimprosible/src/renderer/projection/projection.css:673-750](../../missionimprosible/src/renderer/projection/projection.css#L673-L750) — keyframes y estilos del título existente.
+- [missionimprosible/src/renderer/projection/ProjectionApp.tsx:624-646](../../missionimprosible/src/renderer/projection/ProjectionApp.tsx#L624-L646) y equivalente en `ProjectionView.tsx` — grid `.participants` con las cartas a romper en Fase B.
+- [missionimprosible/src/main/main.ts:188-190](../../missionimprosible/src/main/main.ts#L188-L190) — patrón de broadcast IPC a seguir para los canales nuevos.
 
 ## Plan de implementación base
 
 Sigue este plan salvo que el usuario pida variaciones. Antes de empezar, confirma con el usuario los 4 puntos abiertos (ver sección "Preguntas a confirmar antes de implementar").
 
-### 1. Tipos / estado compartido (`src/shared/types.ts`)
+### 1. Tipos / estado compartido (`missionimprosible/src/shared/types.ts`)
 
 Añadir a `AppState`:
 ```ts
@@ -60,7 +60,7 @@ improsiblePhase?: 'title' | 'shatter' | 'barrel' | 'vs' | null
 
 Opcional, si simplifica: un único canal `improsible:start` que arranca la máquina de estados en proyección y un `improsible:clear` que la apaga. En ese caso, no hace falta guardar `improsiblePhase` en `AppState`; vive como `useState` local en `ProjectionApp`. Prefiere esta opción (menos acoplamiento, menos broadcasts por fase).
 
-### 2. IPC (`src/main/preload.ts`, `src/main/main.ts`, `src/renderer/electron-api.d.ts`)
+### 2. IPC (`missionimprosible/src/main/preload.ts`, `missionimprosible/src/main/main.ts`, `missionimprosible/src/renderer/electron-api.d.ts`)
 
 Nuevos canales:
 - `improsible:start` — payload `{ finalistIds: [string, string] }` → broadcast a todas las ventanas.
@@ -76,7 +76,7 @@ onImprosibleClear: (cb: () => void) => () => void
 
 No persistir en `settings.json` — la selección es por sesión.
 
-### 3. Pestaña de control (`src/renderer/control/ControlApp.tsx` + `src/renderer/control/control.css`)
+### 3. Pestaña de control (`missionimprosible/src/renderer/control/ControlApp.tsx` + `missionimprosible/src/renderer/control/control.css`)
 
 Reemplazar el bloque `activeTab === 'improsible'` por:
 
@@ -88,9 +88,9 @@ Reemplazar el bloque `activeTab === 'improsible'` por:
 - Onclick: `window.electronAPI.startImprosible([a, b])`, marcar ejecutado, bloquear animaciones ~12 s (duración total de la secuencia).
 - Botón secundario `Cerrar` que dispare `clearImprosible()` para apagar el overlay VS persistente.
 
-Eliminar de [ControlApp.tsx:1214-1225](../../src/renderer/control/ControlApp.tsx#L1214-L1225) el botón antiguo y el estado asociado (`improsibleExecuted` si ya no se usa en otra parte — verificar con Grep antes de borrar).
+Eliminar de [ControlApp.tsx:1214-1225](../../missionimprosible/src/renderer/control/ControlApp.tsx#L1214-L1225) el botón antiguo y el estado asociado (`improsibleExecuted` si ya no se usa en otra parte — verificar con Grep antes de borrar).
 
-### 4. Proyección — orquestación (`src/renderer/projection/ProjectionApp.tsx`)
+### 4. Proyección — orquestación (`missionimprosible/src/renderer/projection/ProjectionApp.tsx`)
 
 Estado local:
 ```ts
@@ -197,7 +197,7 @@ Si el usuario confirma que hay audio dedicado para la fase `barrel`, reproducirl
 
 1. **Persistencia**: la selección de finalistas NO persiste entre sesiones. Vive solo como estado en memoria; no añadirla a `PERSISTED_KEYS` ni a `settings.json`.
 2. **Audio**: por ahora la secuencia se ejecuta SIN audio. No reproducir nada en ninguna fase. No hace falta cargar ni buscar archivos de audio para la fase de cañón.
-3. **`missions.json`**: BORRAR la entrada `"Misión Improsible"` del archivo [src/data/missions.json](../../src/data/missions.json). Una vez borrada, el filtrado `regularMissions` (hoy en [ControlApp.tsx:123-131](../../src/renderer/control/ControlApp.tsx#L123-L131) y [:297-302](../../src/renderer/control/ControlApp.tsx#L297-L302)) queda obsoleto — simplificar o eliminar esas ramas.
+3. **`missions.json`**: BORRAR la entrada `"Misión Improsible"` del archivo [missionimprosible/src/data/missions.json](../../missionimprosible/src/data/missions.json). Una vez borrada, el filtrado `regularMissions` (hoy en [ControlApp.tsx:123-131](../../missionimprosible/src/renderer/control/ControlApp.tsx#L123-L131) y [:297-302](../../missionimprosible/src/renderer/control/ControlApp.tsx#L297-L302)) queda obsoleto — simplificar o eliminar esas ramas.
 4. **Vidrio roto**: la animación aplica a TODOS los no-finalistas, incluidos los ya eliminados (grises). El criterio es simplemente `id ∉ finalistIds`, sin filtrar por `eliminated`.
 
 ## Salida esperada

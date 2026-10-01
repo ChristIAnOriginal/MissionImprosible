@@ -1,0 +1,91 @@
+import type { AnimationMeta } from '../../shared/types'
+import { ACCENT } from '../../shared/palette'
+
+/** Ficha de "Biblioteca del cartógrafo". Datos puros: sin JSX y sin importar nada de renderer/. */
+export const bibliotecaCartografoMeta: AnimationMeta = {
+  id: 'biblioteca-cartografo',
+  name: 'Biblioteca del cartógrafo',
+  description: 'Fondo: estanterías, un gran mapa en la pared, mesas de dibujo con mapas a medio trazar y un globo terráqueo.',
+  accent: ACCENT.orange,
+  looks: ['realista', 'diorama'],
+  params: [
+    {
+      kind: 'select',
+      key: 'light',
+      label: 'Hora',
+      hint: 'Cambia el cielo de la ventana y cuánto pesa el farol',
+      group: 'Luz',
+      options: [
+        { value: 'dia', label: 'Día' },
+        { value: 'atardecer', label: 'Atardecer' },
+        { value: 'noche', label: 'Noche' },
+      ],
+      default: 'dia',
+    },
+    {
+      kind: 'boolean',
+      key: 'shafts',
+      label: 'Haz de luz',
+      hint: 'La luz de la ventana sobre el suelo, con polvo flotando',
+      group: 'Luz',
+      default: true,
+    },
+    {
+      kind: 'boolean',
+      key: 'lamp',
+      label: 'Farol',
+      hint: 'Cuelga sobre la mesa de dibujo',
+      group: 'Luz',
+      default: true,
+    },
+    {
+      kind: 'select',
+      key: 'mapStyle',
+      label: 'Estilo de los mapas',
+      group: 'Mapas',
+      options: [
+        { value: 'pergamino', label: 'Pergamino' },
+        { value: 'nautico', label: 'Náutico' },
+        { value: 'plano', label: 'Plano azul' },
+      ],
+      default: 'pergamino',
+    },
+    {
+      kind: 'boolean',
+      key: 'drawing',
+      label: 'Ruta trazándose',
+      hint: 'Sobre la mesa de dibujo, una ruta se dibuja sola una y otra vez',
+      group: 'Mapas',
+      default: true,
+    },
+    {
+      kind: 'boolean',
+      key: 'globe',
+      label: 'Globo terráqueo',
+      group: 'Detalles',
+      default: true,
+    },
+    {
+      kind: 'number',
+      key: 'globeSpin',
+      label: 'Giro del globo',
+      hint: 'A 0 queda quieto',
+      group: 'Movimiento',
+      min: 0,
+      max: 1,
+      step: 0.05,
+      default: 0.4,
+    },
+    {
+      kind: 'number',
+      key: 'flicker',
+      label: 'Llama del farol',
+      hint: 'Cuánto baila la llama. A 0 queda quieta.',
+      group: 'Movimiento',
+      min: 0,
+      max: 1,
+      step: 0.05,
+      default: 0.5,
+    },
+  ],
+}

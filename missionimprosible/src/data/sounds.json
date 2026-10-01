@@ -1,0 +1,7 @@
+{
+  "disparo": "audio/participantes/disparo.mpeg",
+  "objetivo": "audio/objetivos/Obj_complete1.wav",
+  "puntaje": "audio/objetivos/puntaje.mpeg",
+  "ganador": "audio/final/F_Ganador.mpeg",
+  "intro": "audio/intro/intro.mpeg"
+}
