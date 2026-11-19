@@ -7,14 +7,11 @@ import { RatingKey, RATING_OPTIONS } from '../constants/ratings'
 import { TabId, TABS, TAB_GROUPS } from '../constants/tabs'
 import { introEndAt, IntroCueKey } from '../constants/intro'
 import { IntroTimeline } from './IntroTimeline'
+import { cacheBust } from '../utils/cacheBust'
+import { UpdatePanel, useUpdateStatus } from './UpdatePanel'
 
-function toLocalFile(absPath: string | null): string | null {
-  if (!absPath) return null
-  const normalized = absPath.replace(/\\/g, '/')
-  const encoded = normalized.split('/').map((seg, i) =>
-    i === 0 && /^[A-Za-z]:$/.test(seg) ? seg : encodeURIComponent(seg)
-  ).join('/')
-  return `localfile:///${encoded}`
+function toLocalFile(path: string | null): string | null {
+  return window.electronAPI.fileUrl(path)
 }
 
 
@@ -25,6 +22,7 @@ export function ControlApp() {
   const [displays, setDisplays] = useState<Display[]>([])
   const [selectedDisplay, setSelectedDisplay] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState<TabId>('participantes')
+  const update = useUpdateStatus()
 
   // Dynamic data from JSON
   const [missionData, setMissionData] = useState<MissionData[]>([])
@@ -550,6 +548,9 @@ export function ControlApp() {
                   onClick={() => setActiveTab(id)}
                 >
                   <Icon size={17} /><span>{label}</span>
+                  {id === 'configuracion' && update.info?.available && (
+                    <span className="sidebar-badge" title={`Versión ${update.info.latest} disponible`} />
+                  )}
                 </button>
               ))}
             </div>
@@ -725,6 +726,7 @@ export function ControlApp() {
 
             {activeTab === 'configuracion' && (
               <div className="participants-list">
+                {window.electronAPI.platform === 'electron' && <UpdatePanel status={update} />}
                 <div className="config-group">
                   <div className="config-group-title">Audio</div>
                   <div className="field-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
@@ -981,7 +983,7 @@ export function ControlApp() {
                       className="btn btn-ghost btn-sm"
                       onClick={async () => {
                         const p = await window.electronAPI.selectLogo()
-                        if (p) setLogoPreview(toLocalFile(p) + '?v=' + Date.now())
+                        if (p) setLogoPreview(cacheBust(toLocalFile(p), Date.now()))
                       }}
                     >
                       Cambiar logo
@@ -1528,14 +1530,7 @@ export function ControlApp() {
                 {improsibleLaunched && improsibleFinalists?.[0] && improsibleFinalists?.[1] && (() => {
                   const fa = state.participants.find(p => p.id === improsibleFinalists[0])
                   const fb = state.participants.find(p => p.id === improsibleFinalists[1])
-                  const toLocal = (path: string | null) => {
-                    if (!path) return null
-                    const normalized = path.replace(/\\/g, '/')
-                    const encoded = normalized.split('/').map((seg: string, i: number) =>
-                      i === 0 && /^[A-Za-z]:$/.test(seg) ? seg : encodeURIComponent(seg)
-                    ).join('/')
-                    return `localfile:///${encoded}`
-                  }
+                  const toLocal = toLocalFile
                   return (
                     <div className="improsible-winner-selector">
                       <div className="improsible-winner-selector-title">Seleccionar ganador</div>

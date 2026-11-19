@@ -18,6 +18,7 @@ protocol.registerSchemesAsPrivileged([
   { scheme: 'localfile', privileges: { secure: true, supportFetchAPI: true, stream: true, bypassCSP: true } },
 ])
 import { AppState } from '../shared/types'
+import { FINAL_AUDIO, PERSISTED_KEYS, initialAppState, settingsFrom } from '../shared/defaults'
 import {
   getMissions,
   saveMissions,
@@ -38,46 +39,12 @@ import {
   deleteDataFile,
 } from './store'
 import { handleSend, handleSendWithSender, handleInvoke, broadcastIpc, sendToRenderer } from '../shared/ipc'
+import { checkForUpdate, installUpdate, openReleasePage } from './updater'
 
 let controlWindow: BrowserWindow | null = null
 let projectionWindow: BrowserWindow | null = null
 
-const savedSettings = getSettings()
-let appState: AppState = {
-  title: 'MISIÓN IMPROSIBLE',
-  subtitle: 'Evaluación de desempeño para el cargo de',
-  role: 'Director',
-  date: new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, ' - '),
-  participants: [
-    { id: '1', name: 'Participante 1', score: 0, photoPath: null },
-    { id: '2', name: 'Participante 2', score: 0, photoPath: null },
-    { id: '3', name: 'Participante 3', score: 0, photoPath: null },
-    { id: '4', name: 'Participante 4', score: 0, photoPath: null },
-  ],
-  visibleParticipants: 4,
-  missionView: null,
-  volume: savedSettings.volume,
-  overlayOpacity: savedSettings.overlayOpacity,
-  rouletteTickBase: savedSettings.rouletteTickBase,
-  rouletteTickRange: savedSettings.rouletteTickRange,
-  curtainFlipEnabled: savedSettings.curtainFlipEnabled,
-  curtainFlipDuration: savedSettings.curtainFlipDuration,
-  curtainPulseEnabled: savedSettings.curtainPulseEnabled,
-  curtainPulseDuration: savedSettings.curtainPulseDuration,
-  curtainPulseColor: savedSettings.curtainPulseColor,
-  curtainLogoColor: savedSettings.curtainLogoColor,
-  curtainWobbleEnabled: savedSettings.curtainWobbleEnabled,
-  curtainWobbleDuration: savedSettings.curtainWobbleDuration,
-  missionPreloads: savedSettings.missionPreloads,
-  ratingDuration: savedSettings.ratingDuration,
-  ratingAutoClear: savedSettings.ratingAutoClear,
-  improsibleWinnerLabel: savedSettings.improsibleWinnerLabel,
-  improsibleWinnerSublabel: savedSettings.improsibleWinnerSublabel,
-  improsibleWinnerColor: savedSettings.improsibleWinnerColor,
-  introLocationText: savedSettings.introLocationText,
-  introTimings: savedSettings.introTimings,
-  curtain: true,
-}
+let appState: AppState = initialAppState(getSettings())
 
 function createControlWindow() {
   controlWindow = new BrowserWindow({
@@ -162,48 +129,21 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })
 
+handleInvoke(ipcMain, 'update:check', () => checkForUpdate())
+handleSend(ipcMain, 'update:install', () => {
+  installUpdate(p => broadcastIpc([controlWindow], 'update:progress', p))
+})
+handleSend(ipcMain, 'update:open-page', () => openReleasePage())
+
 // state:get replies directly to the requester, not a broadcast.
 handleSendWithSender(ipcMain, 'state:get', (sender) => {
   sendToRenderer(sender, 'state:update', appState)
 })
 
-const PERSISTED_KEYS: (keyof AppState)[] = [
-  'volume', 'overlayOpacity', 'rouletteTickBase', 'rouletteTickRange',
-  'curtainFlipEnabled', 'curtainFlipDuration', 'curtainPulseEnabled',
-  'curtainPulseDuration', 'curtainPulseColor', 'curtainLogoColor',
-  'curtainWobbleEnabled', 'curtainWobbleDuration', 'missionPreloads',
-  'ratingDuration', 'ratingAutoClear',
-  'improsibleWinnerLabel', 'improsibleWinnerSublabel', 'improsibleWinnerColor',
-  'introLocationText', 'introTimings',
-]
-
 handleSend(ipcMain, 'appstate:update', (update) => {
   appState = { ...appState, ...update }
   broadcastState()
-  if (PERSISTED_KEYS.some(k => k in update)) {
-    saveSettings({
-      volume: appState.volume ?? 100,
-      overlayOpacity: appState.overlayOpacity ?? 80,
-      rouletteTickBase: appState.rouletteTickBase ?? 180,
-      rouletteTickRange: appState.rouletteTickRange ?? 520,
-      curtainFlipEnabled: appState.curtainFlipEnabled ?? true,
-      curtainFlipDuration: appState.curtainFlipDuration ?? 10,
-      curtainPulseEnabled: appState.curtainPulseEnabled ?? true,
-      curtainPulseDuration: appState.curtainPulseDuration ?? 5,
-      curtainPulseColor: appState.curtainPulseColor ?? '#ff5500',
-      curtainLogoColor: appState.curtainLogoColor ?? 'white',
-      curtainWobbleEnabled: appState.curtainWobbleEnabled ?? false,
-      curtainWobbleDuration: appState.curtainWobbleDuration ?? 0.35,
-      missionPreloads: appState.missionPreloads ?? {},
-      ratingDuration: appState.ratingDuration ?? 5,
-      ratingAutoClear: appState.ratingAutoClear ?? true,
-      improsibleWinnerLabel: appState.improsibleWinnerLabel ?? '¡GANADOR!',
-      improsibleWinnerSublabel: appState.improsibleWinnerSublabel ?? 'MEJOR AGENTE',
-      improsibleWinnerColor: appState.improsibleWinnerColor ?? '#f97316',
-      introLocationText: appState.introLocationText ?? 'Ubicación clasificada',
-      introTimings: appState.introTimings ?? {},
-    })
-  }
+  if (PERSISTED_KEYS.some(k => k in update)) saveSettings(settingsFrom(appState))
 })
 
 handleSend(ipcMain, 'participant:score', ({ id, delta }) => {
@@ -270,7 +210,7 @@ handleSend(ipcMain, 'roulette:start', (payload) => {
 
 handleSend(ipcMain, 'improsible:start', (payload) => {
   appState = { ...appState, improsibleFinalists: payload.finalistIds }
-  const audioPath = resolveAudioPath('audio/misiones/M_Final.wav')
+  const audioPath = resolveAudioPath(FINAL_AUDIO)
   broadcastIpc(allWindows(), 'improsible:start', { finalistIds: payload.finalistIds, audioPath })
 })
 

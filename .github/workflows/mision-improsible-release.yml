@@ -1,0 +1,95 @@
+# Publica una versión de Misión Improsible en cada push a master que la toque.
+#
+# La versión es la siguiente de parche a la mayor entre la última etiqueta
+# mision-v* y la de missionimprosible/package.json. Se inyecta sólo en el build,
+# sin commit: la etiqueta es la fuente de verdad. La app consulta estas releases
+# para saber si está atrasada y descargar el .exe (src/main/updater.ts).
+name: Misión Improsible - release
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'missionimprosible/**'
+      - '.github/workflows/mision-improsible-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Una a la vez: cada ejecución calcula su versión a partir de la etiqueta de la anterior.
+concurrency:
+  group: mision-improsible-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: missionimprosible
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: missionimprosible/package-lock.json
+
+      - name: Calcular versión
+        id: version
+        run: |
+          VERSION=$(node -e '
+            const { execSync } = require("child_process")
+            const parse = v => v.split(".").map(Number)
+            const cmp = (a, b) => { const x = parse(a), y = parse(b); for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] - y[i]; return 0 }
+            const tags = execSync("git tag --list \"mision-v*\"").toString().split("\n")
+              .map(t => t.trim().slice("mision-v".length)).filter(v => /^\d+\.\d+\.\d+$/.test(v))
+            const base = [require("./package.json").version, ...tags].sort(cmp).pop()
+            const [a, b, c] = parse(base)
+            console.log(`${a}.${b}.${c + 1}`)
+          ')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Versión: $VERSION"
+
+      - run: npm ci
+
+      - run: npm test
+
+      - name: Compilar el .exe portable
+        run: |
+          npm version "${{ steps.version.outputs.version }}" --no-git-tag-version --allow-same-version
+          npm run build
+          npx electron-builder --win portable --publish never
+
+      - name: Publicar release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="${{ steps.version.outputs.version }}"
+          gh release create "mision-v$V" "release/MisionImprosible-$V.exe" \
+            --target "$GITHUB_SHA" \
+            --title "Misión Improsible $V" \
+            --generate-notes
+
+  summary:
+    needs: release
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Execution Summary
+        shell: bash
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
+          ## Misión Improsible - release
+
+          | Component | Status | Details |
+          |-----------|--------|---------|
+          | **Build y release** | ${{ needs.release.result == 'success' && '✅ Success' || '❌ Failed' }} | mision-v${{ needs.release.outputs.version }} |
+          EOF

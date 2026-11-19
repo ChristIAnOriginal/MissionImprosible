@@ -16,6 +16,8 @@ import type {
   ChallengeData,
   CinematicData,
   CinematicAudioData,
+  UpdateInfo,
+  UpdateProgress,
 } from './types'
 
 // ----- Send: renderer -> main, fire-and-forget ---------------------------
@@ -38,6 +40,8 @@ export interface SendMap {
   'improsible:clear': void
   'intro:start': void
   'intro:stop': void
+  'update:install': void
+  'update:open-page': void
 }
 
 export type SendChannel = keyof SendMap
@@ -75,6 +79,7 @@ export interface InvokeMap {
   'file:select-audio': { request: void; response: string | null }
   'file:select-video': { request: void; response: string | null }
   'file:delete': { request: string | null; response: boolean }
+  'update:check': { request: void; response: UpdateInfo }
 }
 
 export type InvokeChannel = keyof InvokeMap
@@ -93,13 +98,14 @@ export interface BroadcastMap {
   'improsible:clear': void
   'intro:start': { audioPath: string | null }
   'intro:stop': void
+  'update:progress': UpdateProgress
 }
 
 export type BroadcastChannel = keyof BroadcastMap
 
 // ----- Helpers: renderer side --------------------------------------------
 
-type IpcRendererLike = {
+export type IpcRendererLike = {
   send: (channel: string, ...args: unknown[]) => void
   invoke: (channel: string, ...args: unknown[]) => Promise<unknown>
   on: (channel: string, listener: (event: unknown, ...args: unknown[]) => void) => void

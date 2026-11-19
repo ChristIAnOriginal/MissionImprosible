@@ -1,5 +1,6 @@
 /// <reference path="../electron-api.d.ts" />
 import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react'
+import { cacheBust } from '../utils/cacheBust'
 import { AppState } from '../../shared/types'
 import { RATING_LABELS, RATING_COLORS } from '../constants/ratings'
 import { CHALLENGES } from '../constants/challenges'
@@ -22,17 +23,13 @@ function addModificableClass(svgContent: string): string {
   })
 }
 
-function toLocalFile(absPath: string | null): string | null {
-  if (!absPath) return null
-  const normalized = absPath.replace(/\\/g, '/')
-  const encoded = normalized.split('/').map((seg, i) =>
-    i === 0 && /^[A-Za-z]:$/.test(seg) ? seg : encodeURIComponent(seg)
-  ).join('/')
-  return `localfile:///${encoded}`
+function toLocalFile(path: string | null): string | null {
+  return window.electronAPI.fileUrl(path)
 }
 
 function toVideoSrc(absPath: string | null): string | null {
   if (!absPath) return null
+  if (window.electronAPI.platform === 'web') return window.electronAPI.fileUrl(absPath)
   const normalized = absPath.replace(/\\/g, '/')
   const encoded = normalized.split('/').map((seg, i) =>
     i === 0 && /^[A-Za-z]:$/.test(seg) ? seg : encodeURIComponent(seg)
@@ -188,7 +185,7 @@ export function ProjectionApp() {
   useEffect(() => {
     if (!state?.logoVersion) return
     ;window.electronAPI.getLogoPath().then((p: string | null) => {
-      setLogoUrl(p ? toLocalFile(p) + '?v=' + state.logoVersion : null)
+      setLogoUrl(p ? cacheBust(toLocalFile(p), state.logoVersion ?? 0) : null)
     })
   }, [state?.logoVersion])
 

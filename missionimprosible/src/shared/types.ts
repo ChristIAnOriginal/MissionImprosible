@@ -90,3 +90,21 @@ export interface CinematicAudioData {
   audioPath: string | null
 }
 
+/** Resultado de comparar la versión en curso con la última publicada en GitHub. */
+export interface UpdateInfo {
+  current: string
+  /** Null si no hay releases o no se pudo consultar. */
+  latest: string | null
+  available: boolean
+  /** Sólo el .exe portable puede reemplazarse a sí mismo. */
+  canInstall: boolean
+  notes: string
+  error?: string
+}
+
+export interface UpdateProgress {
+  phase: 'descargando' | 'instalando' | 'error'
+  received: number
+  total: number
+  message?: string
+}

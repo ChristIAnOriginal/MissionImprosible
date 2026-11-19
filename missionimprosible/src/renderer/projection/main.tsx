@@ -9,5 +9,9 @@ import './intro.css'
 Object.assign(document.documentElement.style, { width: '100vw', height: '100vh', overflow: 'hidden' })
 Object.assign(document.body.style, { width: '100vw', height: '100vh', overflow: 'hidden', background: '#111' })
 
-const root = createRoot(document.getElementById('root')!)
-root.render(<ProjectionApp />)
+async function start() {
+  // Versión web: el "proceso principal" corre en el navegador (src/web/).
+  if (import.meta.env.MODE === 'web') await (await import('../../web/install')).installWebApi('projection')
+  createRoot(document.getElementById('root')!).render(<ProjectionApp />)
+}
+start()

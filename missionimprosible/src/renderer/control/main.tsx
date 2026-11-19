@@ -4,5 +4,9 @@ import { ControlApp } from './ControlApp'
 import '../design-tokens.css'
 import './control.css'
 
-const root = createRoot(document.getElementById('root')!)
-root.render(<ControlApp />)
+async function start() {
+  // Versión web: el "proceso principal" corre en el navegador (src/web/).
+  if (import.meta.env.MODE === 'web') await (await import('../../web/install')).installWebApi('control')
+  createRoot(document.getElementById('root')!).render(<ControlApp />)
+}
+start()

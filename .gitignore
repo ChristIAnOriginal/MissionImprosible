@@ -42,8 +42,14 @@ release/
 # Distribucion portable ensamblada
 dist-portable/
 
+# Versión web de Misión Improsible (npm run build:web)
+dist-web/
+
 # Vídeos de ejemplo de Había una vez (se regeneran con npm run render:ejemplos)
 habiaunavez/ejemplos/
 
 # Paquete comprimido de los ejemplos (se regenera)
 habiaunavez/ejemplos.zip
+
+# Renders sin pintar de D20 (se regeneran con npm run render:*)
+d20/blender/crudo/

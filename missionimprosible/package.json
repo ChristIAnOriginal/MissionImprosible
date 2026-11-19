@@ -16,7 +16,9 @@
     "test:watch": "vitest",
     "package": "npm run build && electron-builder --win",
     "generate-icon": "node scripts/generate-icon.mjs",
-    "package:portable": "npm run build && electron-builder --win portable"
+    "package:portable": "npm run build && electron-builder --win portable",
+    "build:web": "node scripts/build-web.mjs",
+    "preview:web": "vite preview --config vite.web.config.ts"
   },
   "keywords": [],
   "author": "",
@@ -75,6 +77,7 @@
       "uninstallerIcon": "build/icon.ico"
     },
     "portable": {
+      "artifactName": "MisionImprosible-${version}.exe",
       "unpackDirName": "MisionImprosible",
       "requestExecutionLevel": "user"
     },

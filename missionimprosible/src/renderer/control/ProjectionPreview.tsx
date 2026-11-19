@@ -45,7 +45,7 @@ export function ProjectionPreview({ state }: Props) {
           <div key={p.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', border: '0.4cqh solid #888', background: '#fff', overflow: 'hidden' }}>
             <div style={{ flex: 1, minHeight: 0, background: p.photoPath ? '#fff' : '#d0d0d0', overflow: 'hidden', position: 'relative', filter: p.eliminated ? 'grayscale(1)' : 'none', transition: 'filter 0.4s' }}>
               {p.photoPath
-                ? <img src={`localfile:///${p.photoPath.replace(/\\/g, '/')}`} alt={p.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+                ? <img src={window.electronAPI.fileUrl(p.photoPath) ?? ''} alt={p.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
                 : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#d0d0d0', color: '#888', fontSize: '2cqw', fontWeight: 700 }}>FOTO</div>
               }
             </div>

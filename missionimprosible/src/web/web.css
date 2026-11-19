@@ -1,0 +1,27 @@
+/* Aviso inicial de la proyección en la web (ver install.ts). */
+.web-start {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  border: 0;
+  background: #0b0b14;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.web-start strong {
+  font-size: 4vw;
+  letter-spacing: 0.08em;
+  color: #f97316;
+}
+
+.web-start span {
+  font-size: 1.6vw;
+  color: #ccc;
+}

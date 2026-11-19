@@ -1,0 +1,76 @@
+# Publica la versión web de Misión Improsible en GitHub Pages en cada push a
+# master que la toque. Requiere, una sola vez: Settings → Pages → Source:
+# "GitHub Actions".
+name: Misión Improsible - web
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'missionimprosible/**'
+      - '.github/workflows/mision-improsible-web.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: missionimprosible
+    env:
+      # La web no necesita el binario de Electron.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: missionimprosible/package-lock.json
+
+      - run: npm ci
+
+      - run: npm test
+
+      - run: npm run build:web
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: missionimprosible/dist-web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  summary:
+    needs: [build, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Execution Summary
+        shell: bash
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
+          ## Misión Improsible - web
+
+          | Component | Status | Details |
+          |-----------|--------|---------|
+          | **Build** | ${{ needs.build.result == 'success' && '✅ Success' || '❌ Failed' }} | npm run build:web |
+          | **Deploy** | ${{ needs.deploy.result == 'success' && '✅ Success' || '❌ Failed' }} | GitHub Pages |
+          EOF

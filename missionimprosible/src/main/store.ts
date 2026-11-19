@@ -1,7 +1,8 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import { app } from 'electron'
-import { MissionData, ObjectiveData, ChallengeData, CinematicData, CinematicAudioData, MissionPreload } from '../shared/types'
+import { MissionData, ObjectiveData, ChallengeData, CinematicData, CinematicAudioData } from '../shared/types'
+import { SETTINGS_DEFAULTS, type Settings } from '../shared/defaults'
 import { resolveAudioPathIn } from './paths'
 
 export function getDataDir(): string {
@@ -99,52 +100,6 @@ export function getCinematicAudios(): CinematicAudioData[] {
 
 export function saveCinematicAudios(audios: CinematicAudioData[]): void {
   saveJson('cinematic-audios.json', audios.map(a => ({ ...a, audioPath: toStorablePath(a.audioPath) })))
-}
-
-export interface Settings {
-  volume: number
-  overlayOpacity: number
-  rouletteTickBase: number
-  rouletteTickRange: number
-  curtainFlipEnabled: boolean
-  curtainFlipDuration: number
-  curtainPulseEnabled: boolean
-  curtainPulseDuration: number
-  curtainPulseColor: string
-  curtainLogoColor: 'white' | 'orange'
-  curtainWobbleEnabled: boolean
-  curtainWobbleDuration: number
-  missionPreloads: Record<string, MissionPreload>
-  ratingDuration: number
-  ratingAutoClear: boolean
-  improsibleWinnerLabel: string
-  improsibleWinnerSublabel: string
-  improsibleWinnerColor: string
-  introLocationText: string
-  introTimings: Record<string, number>
-}
-
-const SETTINGS_DEFAULTS: Settings = {
-  volume: 100,
-  overlayOpacity: 80,
-  rouletteTickBase: 180,
-  rouletteTickRange: 520,
-  curtainFlipEnabled: true,
-  curtainFlipDuration: 10,
-  curtainPulseEnabled: true,
-  curtainPulseDuration: 5,
-  curtainPulseColor: '#ff5500',
-  curtainLogoColor: 'white',
-  curtainWobbleEnabled: false,
-  curtainWobbleDuration: 0.35,
-  missionPreloads: {},
-  ratingDuration: 5,
-  ratingAutoClear: true,
-  improsibleWinnerLabel: '¡GANADOR!',
-  improsibleWinnerSublabel: 'MEJOR AGENTE',
-  improsibleWinnerColor: '#f97316',
-  introLocationText: 'Ubicación clasificada',
-  introTimings: {},
 }
 
 export function getSettings(): Settings {

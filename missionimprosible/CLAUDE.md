@@ -22,6 +22,8 @@ npm run build:projection # Build projection renderer only
 npm run start        # Full build then launch Electron
 npm run package      # Build + package as Windows NSIS installer
 npm run package:portable # Build + package as Windows portable exe
+npm run build:web        # Versión web estática en dist-web/ (GitHub Pages)
+npm run preview:web      # Sirve dist-web/ en local para probarla
 ```
 
 There is no dev server or hot-reload — every change requires a rebuild (`npm run build`) before running `npm run start`. To iterate faster, build only the changed target (e.g. `npm run build:control`) then relaunch.
@@ -81,3 +83,28 @@ Use `useLayoutEffect` (not `useEffect`) for state that controls what's mounted/v
 ### Build system
 
 Four separate Vite configs — one for main/preload, two for renderers. Each renderer is a standalone SPA with its own `index.html` root. TypeScript uses two tsconfigs: `tsconfig.main.json` (CommonJS, for Electron main) and `tsconfig.renderer.json` (ESNext/bundler, for both React renderers).
+
+### Versión web (GitHub Pages)
+
+El mismo código de los renderers corre en el navegador. Los renderers sólo hablan con
+`window.electronAPI`, que se construye en `src/shared/facade.ts` a partir de un transporte:
+en Electron lo instala `preload.ts` sobre `ipcRenderer`; en la web lo instala
+`src/web/install.ts` antes de montar React (las entradas `main.tsx` lo cargan sólo con
+`--mode web`, así que no entra en el build de Electron).
+
+- `src/web/hub.ts` hace de `main.ts`: vive en la ventana del panel, aplica los mensajes y
+  difunde estado y eventos a la proyección por un `BroadcastChannel`.
+- `src/web/backend.ts` resuelve los `invoke`: los JSON editados van a IndexedDB y, hasta que
+  se editan, se leen los publicados en `data/`. Los ajustes persistidos van a `localStorage`.
+- `src/web/files.ts`: los archivos subidos se guardan en IndexedDB con rutas `user:<id>/<nombre>`;
+  las rutas relativas (`audio/...`) apuntan a `data/`. Toda ruta pasa a URL con
+  `window.electronAPI.fileUrl()`: nunca construir URLs `localfile://` a mano.
+- `src/web/screens.ts`: monitores con la Window Management API (Chrome/Edge) para abrir la
+  proyección en el monitor elegido.
+- Estado inicial y ajustes por defecto: `src/shared/defaults.ts`, común a las dos versiones.
+
+La proyección web arranca con un aviso a pantalla completa: el navegador exige un clic en
+esa ventana para permitir audio y pantalla completa. El workflow
+`.github/workflows/mision-improsible-web.yml` (raíz del repo) publica en Pages en cada push
+a master que toque `missionimprosible/`.
+
