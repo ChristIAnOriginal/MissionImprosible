@@ -682,6 +682,16 @@
   animation-delay: calc(var(--i) * 0.28s);
 }
 
+/* El protocolo es una palabra larga: letra más chica y tecleo más rápido,
+   para que termine con la voz («Protocolo, misión imposible»). */
+.intro-code--word { gap: 0; }
+.intro-code--word .intro-code-char {
+  font-size: clamp(22px, 4.6vw, 88px);
+  animation-delay: calc(var(--i) * 0.065s);
+}
+.intro-code--word .intro-code-caret { height: 4.6vw; margin-left: 0.6vw; }
+.intro-code--word ~ .intro-terminal-status:not(.intro-terminal-status--waiting) { animation-delay: 1.2s; }
+
 @keyframes intro-code-type {
   from { opacity: 0; transform: translateY(0.8vh) scale(1.25); }
   to   { opacity: 1; transform: translateY(0) scale(1); }

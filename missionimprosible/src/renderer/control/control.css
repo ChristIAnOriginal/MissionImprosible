@@ -1917,3 +1917,29 @@ input[type="checkbox"] {
 }
 
 .update-progress span { position: relative; }
+
+/* Disparo especial (pestaña Participantes) */
+.special-shot-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 12px;
+}
+.special-shot-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: var(--color-surface);
+  color: #ccc;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.special-shot-btn:hover { background: var(--color-surface-raised); }
+.special-shot-btn--active {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #fff;
+}

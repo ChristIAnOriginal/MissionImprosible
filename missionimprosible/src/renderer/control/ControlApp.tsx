@@ -6,6 +6,7 @@ import { playAudio, getAudioDuration } from '../utils/audio'
 import { RatingKey, RATING_OPTIONS } from '../constants/ratings'
 import { TabId, TABS, TAB_GROUPS } from '../constants/tabs'
 import { introEndAt, IntroCueKey } from '../constants/intro'
+import { SPECIAL_SHOTS } from '../constants/specialShots'
 import { IntroTimeline } from './IntroTimeline'
 import { cacheBust } from '../utils/cacheBust'
 import { UpdatePanel, useUpdateStatus } from './UpdatePanel'
@@ -577,6 +578,19 @@ export function ControlApp() {
                     <button className="score-btn score-btn-plus"
                       onClick={() => window.electronAPI.updateAppState({ visibleParticipants: Math.min(4, state.visibleParticipants + 1) })}>+</button>
                   </div>
+                </div>
+                <div className="special-shot-picker">
+                  <span className="field-label">Disparo especial</span>
+                  {SPECIAL_SHOTS.map(shot => (
+                    <button key={shot}
+                      className={`special-shot-btn${state.specialShot === shot ? ' special-shot-btn--active' : ''}`}
+                      onClick={() => window.electronAPI.updateAppState({ specialShot: state.specialShot === shot ? null : shot })}>
+                      {shot}
+                    </button>
+                  ))}
+                  {state.specialShot && (
+                    <button className="btn btn-ghost btn-sm" onClick={() => window.electronAPI.updateAppState({ specialShot: null })}>Quitar</button>
+                  )}
                 </div>
                 <div className="participants-grid">
                 {state.participants.map((p, idx) => {

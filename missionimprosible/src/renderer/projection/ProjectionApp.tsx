@@ -938,6 +938,12 @@ export function ProjectionApp() {
           </div>
         )
       })()}
+      {state.specialShot && (
+        <div key={state.specialShot} className="special-shot-tag">
+          <div className="special-shot-tag-caption">Disparo especial activado</div>
+          <div className="special-shot-tag-name">{state.specialShot.toUpperCase()}</div>
+        </div>
+      )}
     </div>
   )
 }

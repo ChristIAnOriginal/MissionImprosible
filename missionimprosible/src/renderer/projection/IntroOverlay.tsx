@@ -6,7 +6,7 @@ import {
   INTRO_TITLE,
   INTRO_SUBTITLE,
   INTRO_TAG,
-  INTRO_CODE,
+  INTRO_PROTOCOL_LABEL,
   INTRO_PROTOCOL,
   IntroSceneId,
 } from '../constants/intro'
@@ -44,6 +44,8 @@ export function IntroOverlay({
   const [subtitleVisible, setSubtitleVisible] = useState(false)
   const [codeTyping, setCodeTyping] = useState(false)
   const [protocolStep, setProtocolStep] = useState(0)
+  const [tagHandleVisible, setTagHandleVisible] = useState(false)
+  const [destructCounting, setDestructCounting] = useState(false)
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
@@ -68,6 +70,8 @@ export function IntroOverlay({
           case 'protocol-decide': setProtocolStep(3); break
           case 'code-empty': setCodeTyping(false); break
           case 'code-type': setCodeTyping(true); break
+          case 'tag-handle': setTagHandleVisible(true); break
+          case 'destruct-count': setDestructCounting(true); break
           case 'end': onFinishRef.current(); break
         }
       }, Math.max(cue.at, 0) * 1000))
@@ -110,12 +114,12 @@ export function IntroOverlay({
         {scene === 'map' && <MapScene locationText={locationText} />}
         {scene === 'silence' && <SilenceScene />}
         {scene === 'classified' && <ClassifiedScene />}
-        {scene === 'tag' && <TagScene />}
+        {scene === 'tag' && <TagScene handleVisible={tagHandleVisible} />}
         {scene === 'doors' && <DoorsScene />}
         {scene === 'protocol' && <ProtocolScene step={protocolStep} />}
         {scene === 'code' && <CodeScene typing={codeTyping} />}
         {scene === 'alarm' && <AlarmScene />}
-        {scene === 'destruct' && <DestructScene />}
+        {scene === 'destruct' && <DestructScene counting={destructCounting} />}
       </div>
     </div>
   )
@@ -244,17 +248,19 @@ function ClassifiedScene() {
   )
 }
 
-/* ── Cue `tag`: se puede divulgar etiquetando a @falso_vacio ────────────── */
+/* ── Cue `tag`: la agencia alienta compartir (cue `tag-handle`: @falso_vacio) ── */
 
-function TagScene() {
+function TagScene({ handleVisible }: { handleVisible: boolean }) {
   return (
     <div className="intro-stage intro-stage--tag">
-      <div className="intro-caption">Autorizados a divulgar si etiquetan a</div>
-      <div className="intro-tag-plate">
+      <div className="intro-caption">La agencia autoriza y alienta compartir esta misión</div>
+      <div key={handleVisible ? 'handle' : 'share'} className="intro-tag-plate">
         <span className="intro-tag-sweep" />
-        <span className="intro-tag-handle">{INTRO_TAG}</span>
+        <span className="intro-tag-handle">{handleVisible ? INTRO_TAG : 'Redes sociales'}</span>
       </div>
-      <div className="intro-tag-hint">Desclasificación autorizada por la agencia</div>
+      <div className="intro-tag-hint">
+        {handleVisible ? 'Queremos ver cómo se vivió la misión' : 'Compartan sus reportes'}
+      </div>
     </div>
   )
 }
@@ -335,21 +341,21 @@ function ProtocolScene({ step }: { step: number }) {
 }
 
 /* ── Cues `code-empty` / `code-type` ────────────────────────────────────────
-   El terminal entra vacío con el cursor parpadeando; los dígitos sólo se
-   montan en `code-type`, así que su animación arranca en ese cue y los dos
-   momentos se pueden mover por separado desde el editor. */
+   El terminal entra vacío con el cursor parpadeando («Damos inicio a la
+   evaluación»); el nombre del protocolo se teclea en `code-type`, cuando la
+   voz lo dice, así que su animación arranca en ese cue. */
 
 function CodeScene({ typing }: { typing: boolean }) {
   return (
     <div className="intro-stage intro-stage--code">
       <div className="intro-caption">Iniciando evaluación</div>
       <div className="intro-terminal">
-        <div className="intro-terminal-protocol">{INTRO_PROTOCOL}</div>
-        <div className="intro-code">
+        <div className="intro-terminal-protocol">{INTRO_PROTOCOL_LABEL}</div>
+        <div className="intro-code intro-code--word">
           {typing &&
-            INTRO_CODE.split('').map((ch, i) => (
+            INTRO_PROTOCOL.toUpperCase().split('').map((ch, i) => (
               <span key={i} className="intro-code-char" style={vars({ '--i': i })}>
-                {ch}
+                {ch === ' ' ? '\u00a0' : ch}
               </span>
             ))}
           <span className="intro-code-caret" />
@@ -357,7 +363,7 @@ function CodeScene({ typing }: { typing: boolean }) {
         {typing ? (
           <div className="intro-terminal-status">ACCESO CONCEDIDO</div>
         ) : (
-          <div className="intro-terminal-status intro-terminal-status--waiting">ESPERANDO CÓDIGO</div>
+          <div className="intro-terminal-status intro-terminal-status--waiting">ESPERANDO AUTORIZACIÓN</div>
         )}
       </div>
     </div>
@@ -383,13 +389,16 @@ function AlarmScene() {
 
 /* ── Cue `destruct`: autodestrucción ────────────────────────────────────── */
 
-function DestructScene() {
+function DestructScene({ counting }: { counting: boolean }) {
   const [count, setCount] = useState(INTRO_DESTRUCT_FROM)
 
+  // El texto entra con «Este mensaje…»; los números, la barra y el destello
+  // arrancan en el cue `destruct-count`, con el «tres» de la locución.
   useEffect(() => {
+    if (!counting) return
     const id = setInterval(() => setCount(c => (c > 0 ? c - 1 : 0)), 1000)
     return () => clearInterval(id)
-  }, [])
+  }, [counting])
 
   return (
     <div
@@ -397,11 +406,21 @@ function DestructScene() {
       style={vars({ '--destruct-duration': `${INTRO_DESTRUCT_FROM}s` })}
     >
       <div className="intro-destruct-text">Este mensaje se autodestruirá en</div>
-      <div key={count} className="intro-destruct-count">{count}</div>
-      <div className="intro-destruct-bar">
-        <span />
-      </div>
-      <div className="intro-destruct-flash" />
+      {counting ? (
+        <>
+          <div key={count} className="intro-destruct-count">{count}</div>
+          <div className="intro-destruct-bar">
+            <span />
+          </div>
+          <div className="intro-destruct-flash" />
+        </>
+      ) : (
+        // Reserva el hueco del número y la barra para que el texto no salte.
+        <div aria-hidden="true" style={{ visibility: 'hidden' }}>
+          <div className="intro-destruct-count">{INTRO_DESTRUCT_FROM}</div>
+          <div className="intro-destruct-bar" />
+        </div>
+      )}
     </div>
   )
 }

@@ -158,7 +158,7 @@ handleSend(ipcMain, 'participant:score-set', ({ id, value }) => {
 
 handleSend(ipcMain, 'participant:update', (participant) => {
   const idx = appState.participants.findIndex(p => p.id === participant.id)
-  if (idx !== -1) { appState.participants[idx] = participant; broadcastState() }
+  if (idx !== -1) { appState.participants[idx] = participant; broadcastState(); saveSettings(settingsFrom(appState)) }
 })
 
 handleInvoke(ipcMain, 'file:select-photo', async (participantId) => {
@@ -170,7 +170,7 @@ handleInvoke(ipcMain, 'file:select-photo', async (participantId) => {
   if (result.canceled || result.filePaths.length === 0) return null
   const filePath = result.filePaths[0]
   const p = appState.participants.find(p => p.id === participantId)
-  if (p) { p.photoPath = filePath; broadcastState() }
+  if (p) { p.photoPath = filePath; broadcastState(); saveSettings(settingsFrom(appState)) }
   return filePath
 })
 

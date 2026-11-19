@@ -18,12 +18,12 @@
   "improsibleWinnerSublabel": "¡Ha sido seleccionado como el mejor agente!",
   "improsibleWinnerColor": "#f97316",
   "introLocationText": "La bastijaus",
-  "introTimings": {
-    "code-type": 57.6,
-    "alarm": 62.5,
-    "destruct": 64.4,
-    "end": 68,
-    "protocol-evaluate": 53,
-    "protocol-observe": 51.9
-  }
+  "introTimings": {},
+  "visibleParticipants": 3,
+  "agents": [
+    { "id": "1", "name": "Karen", "photoPath": "img/agentes/A_Karen.jpeg" },
+    { "id": "2", "name": "Mambo", "photoPath": "img/agentes/A_Mambo.jpeg" },
+    { "id": "3", "name": "Martínez", "photoPath": "img/agentes/A_Martinez.jpeg" },
+    { "id": "4", "name": "Participante 4", "photoPath": null }
+  ]
 }

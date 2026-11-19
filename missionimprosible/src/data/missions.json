@@ -11,8 +11,8 @@
   },
   {
     "id": 3,
-    "name": "Título clasificado",
-    "audioPath": "audio/misiones/M_Título.wav"
+    "name": "Lenguaje codificado",
+    "audioPath": "audio/misiones/M_LenguajeCodificado.mpeg"
   },
   {
     "id": 4,
@@ -36,11 +36,6 @@
   },
   {
     "id": 8,
-    "name": "Switch de agentes",
-    "audioPath": "audio/misiones/M_Switch.wav"
-  },
-  {
-    "id": 9,
     "name": "Ambientación sonora",
     "audioPath": "audio/misiones/M_Ambientación Sonora.wav"
   }

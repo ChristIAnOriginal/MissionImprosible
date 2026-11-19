@@ -59,6 +59,8 @@ export interface AppState {
   introLocationText?: string
   /** Ajustes manuales del guion de la intro: clave del cue → segundo. */
   introTimings?: Record<string, number>
+  /** Disparo especial activo: se muestra como etiqueta en una esquina de la proyección. */
+  specialShot?: string | null
 }
 
 export interface MissionData {

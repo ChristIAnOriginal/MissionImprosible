@@ -49,7 +49,7 @@ export async function createHub(emit: Emit) {
     },
     'participant:update': participant => {
       const idx = state.participants.findIndex(p => p.id === participant.id)
-      if (idx !== -1) { state.participants[idx] = participant; broadcastState() }
+      if (idx !== -1) { state.participants[idx] = participant; broadcastState(); saveSettings() }
     },
     'display:set': displayId => openProjection(displayId),
     'window:close-projection': () => closeProjection(),
@@ -88,7 +88,7 @@ export async function createHub(emit: Emit) {
     },
     setParticipantPhoto(participantId: string, path: string) {
       const p = state.participants.find(p => p.id === participantId)
-      if (p) { p.photoPath = path; broadcastState() }
+      if (p) { p.photoPath = path; broadcastState(); saveSettings() }
     },
     bumpLogo() {
       state = { ...state, logoVersion: (state.logoVersion ?? 0) + 1 }

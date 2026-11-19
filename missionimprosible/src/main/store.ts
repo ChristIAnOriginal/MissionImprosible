@@ -102,17 +102,56 @@ export function saveCinematicAudios(audios: CinematicAudioData[]): void {
   saveJson('cinematic-audios.json', audios.map(a => ({ ...a, audioPath: toStorablePath(a.audioPath) })))
 }
 
+/**
+ * Las fotos de los agentes se guardan relativas a la carpeta de datos cuando
+ * están dentro de ella (p. ej. `img/agentes/Ana.jpg`), así viajan con el .exe;
+ * en memoria se usan rutas absolutas, como el resto de archivos.
+ */
+/**
+ * El .exe portable descomprime sus recursos en una carpeta temporal en cada
+ * arranque, así que lo que se escribiera en data/settings.json se perdería al
+ * cerrar. Empaquetado, los ajustes del usuario van a la carpeta de datos de la
+ * app (%APPDATA%) y se aplican encima del settings.json que trae el .exe.
+ */
+function userSettingsPath(): string | null {
+  return app.isPackaged ? path.join(app.getPath('userData'), 'settings.json') : null
+}
+
+function readUserSettings(): Partial<Settings> {
+  const file = userSettingsPath()
+  if (!file || !fs.existsSync(file)) return {}
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf-8')) as Partial<Settings>
+  } catch {
+    return {}
+  }
+}
+
 export function getSettings(): Settings {
   try {
     const raw = loadJson<Partial<Settings>>('settings.json')
-    return { ...SETTINGS_DEFAULTS, ...raw }
+    const settings = { ...SETTINGS_DEFAULTS, ...raw, ...readUserSettings() }
+    if (Array.isArray(settings.agents)) {
+      settings.agents = settings.agents.map(a => ({ ...a, photoPath: resolveAudioPath(a.photoPath) }))
+    }
+    return settings
   } catch {
     return { ...SETTINGS_DEFAULTS }
   }
 }
 
 export function saveSettings(settings: Settings): void {
-  saveJson('settings.json', settings)
+  const dataDir = getDataDir()
+  const agents = settings.agents.map(a => {
+    if (!a.photoPath) return a
+    const rel = path.relative(dataDir, a.photoPath)
+    const inside = !rel.startsWith('..') && !path.isAbsolute(rel)
+    return inside ? { ...a, photoPath: rel.split(path.sep).join('/') } : a
+  })
+  const file = userSettingsPath()
+  if (!file) return saveJson('settings.json', { ...settings, agents })
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file, JSON.stringify({ ...settings, agents }, null, 2), 'utf-8')
 }
 
 export function getSvgLogoPath(): string {
