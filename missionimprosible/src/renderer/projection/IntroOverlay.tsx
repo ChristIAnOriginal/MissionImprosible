@@ -12,6 +12,21 @@ import {
 } from '../constants/intro'
 import { playAudio } from '../utils/audio'
 
+/**
+ * Audio de la intro que sigue sonando tras el cue `end`. El guion puede cerrar
+ * el overlay antes de que termine la pista (la explosión final), así que al
+ * terminar de forma natural el audio no se corta: se suelta aquí y acaba solo.
+ */
+let lingeringAudio: HTMLAudioElement | null = null
+
+/** Corta en seco el audio de la intro que quede sonando (parada manual o nueva ejecución). */
+export function stopIntroAudio(): void {
+  if (!lingeringAudio) return
+  lingeringAudio.pause()
+  lingeringAudio.src = ''
+  lingeringAudio = null
+}
+
 /** Atajo para pasar custom properties tipadas en `style`. */
 function vars(v: Record<string, string | number>): React.CSSProperties {
   return v as React.CSSProperties
@@ -47,7 +62,7 @@ export function IntroOverlay({
   const [tagHandleVisible, setTagHandleVisible] = useState(false)
   const [destructCounting, setDestructCounting] = useState(false)
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const finishedRef = useRef(false)
 
   // Refs para no reprogramar la línea de tiempo si cambian los callbacks.
   const onCurtainOpenRef = useRef(onCurtainOpen)
@@ -72,24 +87,27 @@ export function IntroOverlay({
           case 'code-type': setCodeTyping(true); break
           case 'tag-handle': setTagHandleVisible(true); break
           case 'destruct-count': setDestructCounting(true); break
-          case 'end': onFinishRef.current(); break
+          case 'end': finishedRef.current = true; onFinishRef.current(); break
         }
       }, Math.max(cue.at, 0) * 1000))
     }
 
+    stopIntroAudio()
     if (audioUrl) {
-      audioRef.current = playAudio(audioUrl, volume)
+      const audio = playAudio(audioUrl, volume)
+      lingeringAudio = audio
+      audio.addEventListener('ended', () => {
+        if (lingeringAudio === audio) lingeringAudio = null
+      })
     }
 
     const timers = timersRef.current
     return () => {
       timers.forEach(clearTimeout)
       timersRef.current = []
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.src = ''
-        audioRef.current = null
-      }
+      // Si la intro terminó sola, el audio sigue hasta el final de la pista;
+      // si se interrumpió antes del cue `end`, se corta ya.
+      if (!finishedRef.current) stopIntroAudio()
     }
     // Se monta una sola vez por ejecución de la intro (la key la fija el padre).
     // eslint-disable-next-line react-hooks/exhaustive-deps

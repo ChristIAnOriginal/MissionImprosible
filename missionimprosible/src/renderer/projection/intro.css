@@ -32,6 +32,23 @@
   transition: opacity 0.6s ease, transform 1.1s cubic-bezier(0.76, 0, 0.24, 1);
 }
 
+/* Al terminar la intro la cortinilla vuelve a su sitio sin cruzar la pantalla
+   (se vería el tablero detrás) y aparece con un fundido rápido. */
+.curtain-overlay.curtain-intro.curtain-intro-return {
+  transition: none;
+  animation: curtain-intro-return 0.35s ease-out both;
+}
+
+@keyframes curtain-intro-return {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* El overlay de la intro sigue opaco debajo hasta que la cortinilla ya tapa la pantalla. */
+.intro-overlay.intro-overlay--exiting {
+  transition-delay: 0.35s;
+}
+
 /* ── Fondo compartido ── */
 .intro-grid {
   position: absolute;

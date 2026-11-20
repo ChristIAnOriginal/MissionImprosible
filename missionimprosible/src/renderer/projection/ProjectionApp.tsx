@@ -5,7 +5,7 @@ import { AppState } from '../../shared/types'
 import { RATING_LABELS, RATING_COLORS } from '../constants/ratings'
 import { CHALLENGES } from '../constants/challenges'
 import { playAudio, playAudioTimed, normalizeVolume } from '../utils/audio'
-import { IntroOverlay } from './IntroOverlay'
+import { IntroOverlay, stopIntroAudio } from './IntroOverlay'
 
 
 function addModificableClass(svgContent: string): string {
@@ -84,6 +84,11 @@ export function ProjectionApp() {
   const [introAudioUrl, setIntroAudioUrl] = useState<string | null>(null)
   const [introRunKey, setIntroRunKey] = useState(0)
   const [introCurtainOpen, setIntroCurtainOpen] = useState(false)
+  // Al cerrar la intro la cortinilla no vuelve deslizándose (dejaría ver el
+  // tablero mientras cruza la pantalla): reaparece en su sitio con un fundido.
+  const [introCurtainReturning, setIntroCurtainReturning] = useState(false)
+  const introCurtainOpenRef = useRef(false)
+  introCurtainOpenRef.current = introCurtainOpen
   const introEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Improsible finale state
@@ -92,14 +97,17 @@ export function ProjectionApp() {
   const [improsibleWinnerId, setImprosibleWinnerId] = useState<string | null>(null)
   const improsibleTimers = useRef<ReturnType<typeof setTimeout>[]>([])
 
-  // Cierra la intro: la cortinilla vuelve a su sitio y el overlay se desvanece.
+  // Cierra la intro: la cortinilla reaparece con un fundido rápido y el overlay se desvanece debajo.
   const endIntro = useCallback(() => {
+    // Si la cortinilla aún no se había apartado (parada antes del cue `curtain`) ya está a la vista.
+    if (introCurtainOpenRef.current) setIntroCurtainReturning(true)
     setIntroCurtainOpen(false)
     setIntroExiting(true)
     if (introEndTimerRef.current) clearTimeout(introEndTimerRef.current)
     introEndTimerRef.current = setTimeout(() => {
       setIntroActive(false)
       setIntroExiting(false)
+      setIntroCurtainReturning(false)
     }, 1300)
   }, [])
 
@@ -108,11 +116,12 @@ export function ProjectionApp() {
       if (introEndTimerRef.current) clearTimeout(introEndTimerRef.current)
       setIntroAudioUrl(toLocalFile(audioPath))
       setIntroCurtainOpen(false)
+      setIntroCurtainReturning(false)
       setIntroExiting(false)
       setIntroActive(true)
       setIntroRunKey(k => k + 1)
     })
-    const unsubStop = window.electronAPI.onIntroStop(endIntro)
+    const unsubStop = window.electronAPI.onIntroStop(() => { stopIntroAudio(); endIntro() })
     return () => {
       unsubStart()
       unsubStop()
@@ -787,7 +796,7 @@ export function ProjectionApp() {
       {curtainMounted && (
         <div
           ref={curtainOverlayRef}
-          className={`curtain-overlay${curtainVisible ? '' : ' curtain-fade-out'}${introActive ? ' curtain-intro' : ''}${introCurtainOpen ? ' curtain-slide-away' : ''}`}
+          className={`curtain-overlay${curtainVisible ? '' : ' curtain-fade-out'}${introActive ? ' curtain-intro' : ''}${introCurtainOpen ? ' curtain-slide-away' : ''}${introCurtainReturning ? ' curtain-intro-return' : ''}`}
           style={{
             ['--pulse-duration' as string]: `${state?.curtainPulseDuration ?? 5}s`,
             ['--pulse-color' as string]: state?.curtainPulseColor ?? '#ff5500',
