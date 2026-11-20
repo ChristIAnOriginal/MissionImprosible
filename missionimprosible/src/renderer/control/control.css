@@ -1136,6 +1136,8 @@ input[type="checkbox"] {
   gap: 0;
   padding: 0;
 }
+/* En pantallas bajas nada se encoge: la pestaña entera hace scroll. */
+.improsible-tab > * { flex-shrink: 0; }
 
 .improsible-tab-header {
   display: flex;
@@ -1239,8 +1241,6 @@ input[type="checkbox"] {
   align-items: start;
   gap: 8px;
   padding: 4px 8px 8px;
-  overflow-y: auto;
-  flex: 1;
 }
 
 .improsible-pcard {
