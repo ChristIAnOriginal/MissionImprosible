@@ -44,6 +44,14 @@
   to   { opacity: 1; }
 }
 
+/* Tras el cue `end`: negro total hasta que acaba el audio de la intro. */
+.intro-blackout {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: #000;
+}
+
 /* El overlay de la intro sigue opaco debajo hasta que la cortinilla ya tapa la pantalla. */
 .intro-overlay.intro-overlay--exiting {
   transition-delay: 0.35s;

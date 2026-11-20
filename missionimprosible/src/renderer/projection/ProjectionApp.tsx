@@ -5,7 +5,7 @@ import { AppState } from '../../shared/types'
 import { RATING_LABELS, RATING_COLORS } from '../constants/ratings'
 import { CHALLENGES } from '../constants/challenges'
 import { playAudio, playAudioTimed, normalizeVolume } from '../utils/audio'
-import { IntroOverlay, stopIntroAudio } from './IntroOverlay'
+import { IntroOverlay } from './IntroOverlay'
 
 
 function addModificableClass(svgContent: string): string {
@@ -121,7 +121,7 @@ export function ProjectionApp() {
       setIntroActive(true)
       setIntroRunKey(k => k + 1)
     })
-    const unsubStop = window.electronAPI.onIntroStop(() => { stopIntroAudio(); endIntro() })
+    const unsubStop = window.electronAPI.onIntroStop(endIntro)
     return () => {
       unsubStart()
       unsubStop()

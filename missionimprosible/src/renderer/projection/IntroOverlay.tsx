@@ -9,23 +9,9 @@ import {
   INTRO_PROTOCOL_LABEL,
   INTRO_PROTOCOL,
   IntroSceneId,
+  IntroCueKey,
 } from '../constants/intro'
-import { playAudio } from '../utils/audio'
-
-/**
- * Audio de la intro que sigue sonando tras el cue `end`. El guion puede cerrar
- * el overlay antes de que termine la pista (la explosión final), así que al
- * terminar de forma natural el audio no se corta: se suelta aquí y acaba solo.
- */
-let lingeringAudio: HTMLAudioElement | null = null
-
-/** Corta en seco el audio de la intro que quede sonando (parada manual o nueva ejecución). */
-export function stopIntroAudio(): void {
-  if (!lingeringAudio) return
-  lingeringAudio.pause()
-  lingeringAudio.src = ''
-  lingeringAudio = null
-}
+import { normalizeVolume } from '../utils/audio'
 
 /** Atajo para pasar custom properties tipadas en `style`. */
 function vars(v: Record<string, string | number>): React.CSSProperties {
@@ -61,8 +47,7 @@ export function IntroOverlay({
   const [protocolStep, setProtocolStep] = useState(0)
   const [tagHandleVisible, setTagHandleVisible] = useState(false)
   const [destructCounting, setDestructCounting] = useState(false)
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
-  const finishedRef = useRef(false)
+  const [blackout, setBlackout] = useState(false)
 
   // Refs para no reprogramar la línea de tiempo si cambian los callbacks.
   const onCurtainOpenRef = useRef(onCurtainOpen)
@@ -71,43 +56,84 @@ export function IntroOverlay({
   onFinishRef.current = onFinish
 
   useEffect(() => {
-    // El reloj arranca junto con el audio; la cortinilla ya está quieta porque
-    // el proceso principal apagó flip/pulse/wobble antes de emitir 'intro:start'.
-    for (const cue of resolveIntroCues(timings)) {
-      timersRef.current.push(setTimeout(() => {
-        if (cue.scene) setScene(cue.scene)
-        switch (cue.key) {
-          case 'curtain': onCurtainOpenRef.current(true); break
-          case 'subtitle': setSubtitleVisible(true); break
-          case 'protocol': setProtocolStep(0); break
-          case 'protocol-observe': setProtocolStep(1); break
-          case 'protocol-evaluate': setProtocolStep(2); break
-          case 'protocol-decide': setProtocolStep(3); break
-          case 'code-empty': setCodeTyping(false); break
-          case 'code-type': setCodeTyping(true); break
-          case 'tag-handle': setTagHandleVisible(true); break
-          case 'destruct-count': setDestructCounting(true); break
-          case 'end': finishedRef.current = true; onFinishRef.current(); break
-        }
-      }, Math.max(cue.at, 0) * 1000))
+    // La cortinilla ya está quieta porque el proceso principal apagó
+    // flip/pulse/wobble antes de emitir 'intro:start'.
+    const cues = resolveIntroCues(timings)
+    let next = 0
+    let ended = false
+    let finished = false
+
+    const finish = () => {
+      if (finished) return
+      finished = true
+      onFinishRef.current()
     }
 
-    stopIntroAudio()
-    if (audioUrl) {
-      const audio = playAudio(audioUrl, volume)
-      lingeringAudio = audio
+    const fire = (key: IntroCueKey, scene: IntroSceneId | null) => {
+      if (scene) setScene(scene)
+      switch (key) {
+        case 'curtain': onCurtainOpenRef.current(true); break
+        case 'subtitle': setSubtitleVisible(true); break
+        case 'protocol': setProtocolStep(0); break
+        case 'protocol-observe': setProtocolStep(1); break
+        case 'protocol-evaluate': setProtocolStep(2); break
+        case 'protocol-decide': setProtocolStep(3); break
+        case 'code-empty': setCodeTyping(false); break
+        case 'code-type': setCodeTyping(true); break
+        case 'tag-handle': setTagHandleVisible(true); break
+        case 'destruct-count': setDestructCounting(true); break
+        case 'end':
+          // Pantalla en negro mientras suena el resto del audio (la explosión);
+          // la cortinilla vuelve cuando la pista termina.
+          setBlackout(true)
+          if (ended) finish()
+          break
+      }
+    }
+
+    // El reloj de la secuencia ES la posición del audio: así las escenas no se
+    // desfasan aunque el audio tarde en cargar o se atasque. Sin audio (o si el
+    // navegador no deja reproducirlo) se usa el reloj de pared.
+    let wallStart: number | null = null
+    const useWallClock = () => {
+      // Continúa desde donde iba el audio, si llegó a sonar.
+      if (wallStart === null) wallStart = performance.now() - (audio?.currentTime ?? 0) * 1000
+    }
+    const audio = audioUrl ? new Audio(audioUrl) : null
+    const now = () => wallStart !== null
+      ? (performance.now() - wallStart) / 1000
+      : audio!.currentTime
+
+    const tick = () => {
+      const t = now()
+      while (next < cues.length && cues[next].at <= t) {
+        const cue = cues[next++]
+        fire(cue.key, cue.scene)
+      }
+    }
+
+    if (audio) {
+      audio.volume = normalizeVolume(volume)
       audio.addEventListener('ended', () => {
-        if (lingeringAudio === audio) lingeringAudio = null
+        ended = true
+        // Lo que quede del guion pasa ya (si `end` estaba más allá del audio).
+        while (next < cues.length) { const cue = cues[next++]; fire(cue.key, cue.scene) }
+        finish()
       })
+      audio.addEventListener('error', () => { ended = true; useWallClock() })
+      audio.play().catch(() => { ended = true; useWallClock() })
+    } else {
+      ended = true
+      useWallClock()
     }
 
-    const timers = timersRef.current
+    const interval = setInterval(tick, 20)
     return () => {
-      timers.forEach(clearTimeout)
-      timersRef.current = []
-      // Si la intro terminó sola, el audio sigue hasta el final de la pista;
-      // si se interrumpió antes del cue `end`, se corta ya.
-      if (!finishedRef.current) stopIntroAudio()
+      clearInterval(interval)
+      if (audio) {
+        audio.pause()
+        audio.src = ''
+      }
     }
     // Se monta una sola vez por ejecución de la intro (la key la fija el padre).
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -139,6 +165,8 @@ export function IntroOverlay({
         {scene === 'alarm' && <AlarmScene />}
         {scene === 'destruct' && <DestructScene counting={destructCounting} />}
       </div>
+
+      {blackout && <div className="intro-blackout" />}
     </div>
   )
 }

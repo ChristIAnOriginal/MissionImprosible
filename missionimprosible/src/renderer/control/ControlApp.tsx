@@ -249,7 +249,14 @@ export function ControlApp() {
   }
 
   const introTimings = state?.introTimings ?? {}
-  const introDuration = introEndAt(introTimings)
+  // La proyección queda en negro tras el cue `end` hasta que acaba el audio,
+  // así que la intro dura lo que sea más largo de los dos.
+  const [introAudioSeconds, setIntroAudioSeconds] = useState(0)
+  useEffect(() => {
+    setIntroAudioSeconds(0)
+    if (soundIntro) getAudioDuration(soundIntro, ms => setIntroAudioSeconds(ms / 1000))
+  }, [soundIntro])
+  const introDuration = Math.max(introEndAt(introTimings), introAudioSeconds)
 
   // Reloj de la intro: alimenta la línea de tiempo mientras la secuencia corre.
   useEffect(() => {
